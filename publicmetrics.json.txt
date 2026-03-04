@@ -1,0 +1,30 @@
+{
+  "snapshots": [
+    {
+      "date": "2026-02-24",
+      "projects": [
+        {
+          "name": "Amazon E-commerce Chatbot",
+          "type": "LLM",
+          "runs": [
+            { "latencyMs": 1400, "tokens": 820, "costUsd": 0.006, "success": true },
+            { "latencyMs": 1350, "tokens": 800, "costUsd": 0.006, "success": true }
+          ]
+        }
+      ]
+    },
+    {
+      "date": "2026-03-03",
+      "projects": [
+        {
+          "name": "Amazon E-commerce Chatbot",
+          "type": "LLM",
+          "runs": [
+            { "latencyMs": 1200, "tokens": 780, "costUsd": 0.005, "success": true },
+            { "latencyMs": 980, "tokens": 740, "costUsd": 0.004, "success": true }
+          ]
+        }
+      ]
+    }
+  ]
+}

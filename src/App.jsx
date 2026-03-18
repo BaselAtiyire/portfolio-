@@ -2,13 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
 export default function App() {
-  /* =========================
-     Typed rotating roles
-  ========================== */
   const roles = ["AI Engineer", "ML Engineer", "Data Engineer", "Data Scientist", "Business Analyst"];
   const [text, setText] = useState("");
   const [roleIndex, setRoleIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
+  const [copiedKey, setCopiedKey] = useState("");
 
   useEffect(() => {
     const currentRole = roles[roleIndex];
@@ -29,10 +27,6 @@ export default function App() {
     }
   }, [charIndex, roleIndex]);
 
-  /* =========================
-     Copy helper
-  ========================== */
-  const [copiedKey, setCopiedKey] = useState("");
   const copyText = async (value, key) => {
     try {
       await navigator.clipboard.writeText(value);
@@ -52,9 +46,6 @@ export default function App() {
     }
   };
 
-  /* =========================
-     Projects (6)
-  ========================== */
   const projects = useMemo(
     () => [
       {
@@ -71,12 +62,25 @@ export default function App() {
         ],
       },
       {
+        title: "EmotionVision AI",
+        desc: "AI-powered emotion recognition app that predicts facial expressions from uploaded images and provides an interactive interface for real-time inference.",
+        tech: ["Python", "Streamlit", "TensorFlow", "OpenCV", "CNN"],
+        tags: ["AI", "Computer Vision", "Deep Learning"],
+        live: "https://emotionvision-ai-appkcrrtrbwvwwkmdthwwvc.streamlit.app/",
+        github: "https://github.com/BaselAtiyire/emotionvision-ai",
+        metrics: [
+          "🧠 Built a CNN-based emotion classification workflow for facial expression recognition",
+          "⚡ Delivered fast interactive inference through a Streamlit web app interface",
+          "📊 Improved usability with real-time prediction display for uploaded facial images",
+        ],
+      },
+      {
         title: "LLM-Enhanced Quantitative Portfolio Intelligence Engine",
         desc: "Quant portfolio analytics augmented with LLM narratives for faster, interpretable investment insights.",
         tech: ["Python", "Streamlit", "LLM", "Quant", "Analytics"],
         tags: ["LLM", "Analytics", "Finance"],
         live: "https://llm-enhanced-quantitative-portfolio-intelligence-engine-e385ca.streamlit.app/",
-        github: "#",
+        github: "https://github.com/BaselAtiyire/LLM-Enhanced-Quantitative-Portfolio-Intelligence-Engine",
         metrics: [
           "📊 Automated 12+ portfolio KPIs (Sharpe, Sortino, drawdown, volatility, beta, CAGR)",
           "⚡ Reduced manual analysis time from ~5 minutes to <30 seconds per run",
@@ -97,12 +101,12 @@ export default function App() {
         ],
       },
       {
-        title: "Financial Document Extractor (AI)",
-        desc: "LLM-powered extraction system for structured financial fields from statements and reports (API-first workflow).",
-        tech: ["Python", "FastAPI", "Streamlit", "LLM"],
-        tags: ["LLM", "Extraction", "API"],
-        live: "#",
-        github: "#",
+      title: "Financial AI Research Platform",
+  desc: "End-to-end AI platform for financial document extraction, source-grounded RAG, forecasting, sentiment analysis, valuation workflows, and market intelligence automation.",
+  tech: ["Python", "FastAPI", "Streamlit", "LangChain", "ChromaDB", "LLM", "Financial AI"],
+  tags: ["LLM", "RAG", "Finance", "API"],
+  live: "https://financial-ai-research-platform-v2-xcjjodytrwynpcjglvebff.streamlit.app/",
+  github: "https://github.com/BaselAtiyire/financial-ai-research-platform-v2",     
         metrics: [
           "🎯 Achieved ~90% structured extraction accuracy for key fields (dates, totals, balances)",
           "📄 Reduced manual review time by ~80% through automated extraction + validation",
@@ -114,7 +118,7 @@ export default function App() {
         desc: "Retrieval-Augmented Generation (RAG) assistant for real estate research and document Q&A.",
         tech: ["LangChain", "ChromaDB", "RAG"],
         tags: ["RAG", "Vector DB", "LangChain"],
-        live: "#",
+        live: "https://baselatiyire-real-estate-rag-assistant-app-ejmnhc.streamlit.app/",
         github: "https://github.com/BaselAtiyire/real-estate-rag-assistant",
         metrics: [
           "🔎 Improved retrieval relevance by ~30% via chunking strategy + embedding tuning",
@@ -127,8 +131,8 @@ export default function App() {
         desc: "Embedding-based semantic search that enables conversational Q&A over document chunks.",
         tech: ["Vector DB", "Embeddings", "Streamlit"],
         tags: ["Embeddings", "Semantic Search"],
-        live: "#",
-        github: "#",
+        live: "https://vectorrag-ai.streamlit.app/",
+        github: "https://github.com/BaselAtiyire/vector-rag-streamlit",
         metrics: [
           "📂 Enabled chat across 100+ document chunks using embedding-based retrieval",
           "⚡ Reduced query latency by ~30% via vector indexing + caching",
@@ -139,10 +143,6 @@ export default function App() {
     []
   );
 
-  /* =========================
-     Metrics JSON (AUTO)
-     Reads: public/metrics.json
-  ========================== */
   const fallbackMetricsJson = useMemo(
     () => ({
       lastEvaluated: "2026-03-03",
@@ -154,6 +154,15 @@ export default function App() {
             { latencyMs: 900, tokens: 700, costUsd: 0.005, success: true },
             { latencyMs: 1200, tokens: 820, costUsd: 0.006, success: true },
             { latencyMs: 1500, tokens: 780, costUsd: 0.005, success: true },
+          ],
+        },
+        {
+          name: "EmotionVision AI",
+          type: "Computer Vision",
+          runs: [
+            { latencyMs: 1400, tokens: 0, costUsd: 0, success: true },
+            { latencyMs: 1200, tokens: 0, costUsd: 0, success: true },
+            { latencyMs: 1300, tokens: 0, costUsd: 0, success: true },
           ],
         },
         {
@@ -175,11 +184,10 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
-
     const load = async () => {
       try {
         const res = await fetch(`/metrics.json?ts=${Date.now()}`);
-        if (!res.ok) throw new Error(`metrics.json not found (HTTP ${res.status})`);
+        if (!res.ok) throw new Error();
         const data = await res.json();
         if (!cancelled) {
           setMetricsJson(data);
@@ -192,18 +200,12 @@ export default function App() {
         }
       }
     };
-
     load();
     return () => {
       cancelled = true;
     };
   }, [fallbackMetricsJson]);
 
-  /* =========================
-     Metrics history (Trends)
-     Reads: public/metrics_history.json
-     Expect at least 2 snapshots for Δ
-  ========================== */
   const fallbackHistory = useMemo(
     () => ({
       snapshots: [
@@ -216,6 +218,14 @@ export default function App() {
               runs: [
                 { latencyMs: 1400, tokens: 820, costUsd: 0.006, success: true },
                 { latencyMs: 1350, tokens: 800, costUsd: 0.006, success: true },
+              ],
+            },
+            {
+              name: "EmotionVision AI",
+              type: "Computer Vision",
+              runs: [
+                { latencyMs: 1700, tokens: 0, costUsd: 0, success: true },
+                { latencyMs: 1600, tokens: 0, costUsd: 0, success: true },
               ],
             },
             {
@@ -242,11 +252,10 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
-
     const load = async () => {
       try {
         const res = await fetch(`/metrics_history.json?ts=${Date.now()}`);
-        if (!res.ok) throw new Error(`metrics_history.json not found (HTTP ${res.status})`);
+        if (!res.ok) throw new Error();
         const data = await res.json();
         if (!cancelled) {
           setHistoryJson(data);
@@ -259,7 +268,6 @@ export default function App() {
         }
       }
     };
-
     load();
     return () => {
       cancelled = true;
@@ -336,7 +344,6 @@ export default function App() {
   const computedMetrics = useMemo(() => {
     const snapshot = { date: metricsJson?.lastEvaluated || "—", projects: metricsJson?.projects || [] };
     const summary = summarizeSnapshot(snapshot);
-
     return {
       lastEvaluated: summary.date,
       note: metricsLoadNote,
@@ -354,18 +361,20 @@ export default function App() {
         prev: null,
         curr: null,
         deltaGlobal: null,
+        pctGlobal: null,
         deltaProjects: [],
       };
     }
 
-    // Sort by date if possible (ISO dates work well)
     const sorted = [...snaps].sort((a, b) => String(a.date).localeCompare(String(b.date)));
     const prev = summarizeSnapshot(sorted[sorted.length - 2]);
     const curr = summarizeSnapshot(sorted[sorted.length - 1]);
 
-    const delta = (a, b) => {
+    const delta = (a, b) => (a == null || b == null ? null : b - a);
+    const pct = (a, b) => {
       if (a == null || b == null) return null;
-      return b - a;
+      if (!Number.isFinite(a) || !Number.isFinite(b) || a === 0) return null;
+      return (b - a) / a;
     };
 
     const deltaGlobal = {
@@ -375,12 +384,19 @@ export default function App() {
       tokensPerQuery: delta(prev.global.tokensPerQuery, curr.global.tokensPerQuery),
       costPerQueryUsd: delta(prev.global.costPerQueryUsd, curr.global.costPerQueryUsd),
       successRate: delta(prev.global.successRate, curr.global.successRate),
-      evalQueries: delta(prev.global.evalQueries, curr.global.evalQueries),
+    };
+
+    const pctGlobal = {
+      p50LatencyMs: pct(prev.global.p50LatencyMs, curr.global.p50LatencyMs),
+      p95LatencyMs: pct(prev.global.p95LatencyMs, curr.global.p95LatencyMs),
+      recallAt5: pct(prev.global.recallAt5, curr.global.recallAt5),
+      tokensPerQuery: pct(prev.global.tokensPerQuery, curr.global.tokensPerQuery),
+      costPerQueryUsd: pct(prev.global.costPerQueryUsd, curr.global.costPerQueryUsd),
+      successRate: pct(prev.global.successRate, curr.global.successRate),
     };
 
     const prevMap = new Map(prev.perProject.map((p) => [p.name, p]));
     const currMap = new Map(curr.perProject.map((p) => [p.name, p]));
-
     const allNames = Array.from(new Set([...prevMap.keys(), ...currMap.keys()]));
 
     const deltaProjects = allNames.map((name) => {
@@ -399,20 +415,16 @@ export default function App() {
           costPerQueryUsd: delta(p0?.costPerQueryUsd, p1?.costPerQueryUsd),
           successRate: delta(p0?.successRate, p1?.successRate),
         },
+        pct: {
+          p50LatencyMs: pct(p0?.p50LatencyMs, p1?.p50LatencyMs),
+          p95LatencyMs: pct(p0?.p95LatencyMs, p1?.p95LatencyMs),
+          recallAt5: pct(p0?.recallAt5, p1?.recallAt5),
+          tokensPerQuery: pct(p0?.tokensPerQuery, p1?.tokensPerQuery),
+          costPerQueryUsd: pct(p0?.costPerQueryUsd, p1?.costPerQueryUsd),
+          successRate: pct(p0?.successRate, p1?.successRate),
+        },
       };
     });
-
-    // Best improvements first (lower latency is good, higher recall/success is good, lower cost is good)
-    const score = (d) => {
-      if (!d) return 0;
-      const lat = Number.isFinite(d.p95LatencyMs) ? -d.p95LatencyMs / 1000 : 0; // lower is better
-      const rec = Number.isFinite(d.recallAt5) ? d.recallAt5 * 5 : 0;
-      const suc = Number.isFinite(d.successRate) ? d.successRate * 3 : 0;
-      const cost = Number.isFinite(d.costPerQueryUsd) ? -d.costPerQueryUsd * 50 : 0;
-      return lat + rec + suc + cost;
-    };
-
-    deltaProjects.sort((a, b) => score(b.delta) - score(a.delta));
 
     return {
       note: historyLoadNote,
@@ -420,14 +432,12 @@ export default function App() {
       prev,
       curr,
       deltaGlobal,
+      pctGlobal,
       deltaProjects,
     };
   }, [historyJson, historyLoadNote]);
 
-  /* =========================
-     Filters + Search
-  ========================== */
-  const filterOptions = ["All", "LLM", "RAG", "Data", "Analytics", "API"];
+  const filterOptions = ["All", "LLM", "RAG", "Data", "Analytics", "API", "AI"];
   const [activeFilter, setActiveFilter] = useState("All");
   const [query, setQuery] = useState("");
 
@@ -450,19 +460,16 @@ export default function App() {
     });
   }, [projects, activeFilter, query]);
 
-  /* =========================
-     Education + Certs + Publications
-  ========================== */
   const education = [
     {
-      period: "2024 – 2026 ( May, Expected)",
+      period: "2024 – 2026 (Expected)",
       degree: "M.S. Computer Science",
-      school: "Western Illinois University, USA",
+      school: "Western Illinois University",
       details: ["Focus: Artificial Intelligence, Machine Learning, Data Science"],
     },
     {
       period: "Graduated: 2021",
-      degree: "B.Sc. Computing with Accounting",
+      degree: "B.Sc. Computer Science",
       school: "University for Development Studies, Ghana",
       details: ["Focus: Business Intelligence, Data Management, Financial Computing"],
     },
@@ -522,9 +529,6 @@ export default function App() {
     },
   ];
 
-  /* =========================
-     UI tokens (Blue Eclipse)
-  ========================== */
   const container = { maxWidth: 1040, margin: "0 auto", padding: "0 16px" };
 
   const glass = {
@@ -672,6 +676,60 @@ export default function App() {
     return null;
   };
 
+  const TrendPill = ({ delta, pctChange, goodWhenHigher = true, suffix = "", decimals = 0, pctDecimals = 1 }) => {
+    if (delta == null || !Number.isFinite(delta)) {
+      return <span style={{ ...pill, opacity: 0.6 }}>N/A</span>;
+    }
+
+    const improved = goodWhenHigher ? delta > 0 : delta < 0;
+    const worsened = goodWhenHigher ? delta < 0 : delta > 0;
+
+    const bg = improved
+      ? "rgba(34,197,94,0.16)"
+      : worsened
+      ? "rgba(239,68,68,0.16)"
+      : "rgba(148,163,184,0.12)";
+
+    const border = improved
+      ? "rgba(34,197,94,0.38)"
+      : worsened
+      ? "rgba(239,68,68,0.35)"
+      : "rgba(148,163,184,0.25)";
+
+    const color = improved ? "#bbf7d0" : worsened ? "#fecaca" : "#e5e7eb";
+    const icon = improved ? "trendUp" : worsened ? "trendDown" : "flat";
+    const sign = delta > 0 ? "+" : "";
+    const val = decimals > 0 ? delta.toFixed(decimals) : Math.round(delta).toString();
+
+    const pctTxt =
+      pctChange == null || !Number.isFinite(pctChange)
+        ? ""
+        : ` (${pctChange > 0 ? "+" : ""}${(pctChange * 100).toFixed(pctDecimals)}%)`;
+
+    return (
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          fontSize: 12,
+          padding: "6px 10px",
+          borderRadius: 999,
+          border: `1px solid ${border}`,
+          background: bg,
+          color,
+          whiteSpace: "nowrap",
+        }}
+      >
+        <Icon name={icon} />
+        {sign}
+        {val}
+        {suffix}
+        <span style={{ opacity: 0.9 }}>{pctTxt}</span>
+      </span>
+    );
+  };
+
   const MiniBar = ({ value, max = 3000, label = "", suffix = "" }) => {
     if (value == null) {
       return (
@@ -691,7 +749,8 @@ export default function App() {
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#cbd5f5" }}>
           <span>{label}</span>
           <span style={{ color: "#93c5fd", fontWeight: 800 }}>
-            {Math.round(value)}{suffix}
+            {Math.round(value)}
+            {suffix}
           </span>
         </div>
         <div style={{ height: 8, borderRadius: 999, background: "rgba(148,163,184,0.12)", border: "1px solid rgba(148,163,184,0.18)", overflow: "hidden" }}>
@@ -728,55 +787,6 @@ export default function App() {
     );
   };
 
-  const TrendPill = ({ delta, goodWhenHigher = true, suffix = "", decimals = 0 }) => {
-    if (delta == null || !Number.isFinite(delta)) {
-      return <span style={{ ...pill, opacity: 0.6 }}>N/A</span>;
-    }
-
-    // "Good" direction
-    const improved = goodWhenHigher ? delta > 0 : delta < 0;
-    const worsened = goodWhenHigher ? delta < 0 : delta > 0;
-
-    const bg = improved
-      ? "rgba(34,197,94,0.16)"
-      : worsened
-      ? "rgba(239,68,68,0.16)"
-      : "rgba(148,163,184,0.12)";
-
-    const border = improved
-      ? "rgba(34,197,94,0.38)"
-      : worsened
-      ? "rgba(239,68,68,0.35)"
-      : "rgba(148,163,184,0.25)";
-
-    const color = improved ? "#bbf7d0" : worsened ? "#fecaca" : "#e5e7eb";
-
-    const icon = improved ? "trendUp" : worsened ? "trendDown" : "flat";
-    const sign = delta > 0 ? "+" : "";
-
-    const val = decimals > 0 ? delta.toFixed(decimals) : Math.round(delta).toString();
-
-    return (
-      <span
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 8,
-          fontSize: 12,
-          padding: "6px 10px",
-          borderRadius: 999,
-          border: `1px solid ${border}`,
-          background: bg,
-          color,
-          whiteSpace: "nowrap",
-        }}
-      >
-        <Icon name={icon} />
-        {sign}{val}{suffix}
-      </span>
-    );
-  };
-
   return (
     <div
       style={{
@@ -795,7 +805,6 @@ export default function App() {
         ::-webkit-scrollbar-thumb:hover { background: rgba(14,165,233,0.45); }
       `}</style>
 
-      {/* Navbar */}
       <header
         style={{
           position: "sticky",
@@ -806,7 +815,7 @@ export default function App() {
           borderBottom: "1px solid rgba(148, 163, 184, 0.15)",
         }}
       >
-        <div style={{ maxWidth: 1040, margin: "0 auto", padding: "10px 16px" }}>
+        <div style={{ ...container, paddingTop: 10, paddingBottom: 10 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 14, minHeight: 36 }}>
             <strong style={{ color: "#e5e7eb" }}>Portfolio</strong>
 
@@ -831,7 +840,6 @@ export default function App() {
         </div>
       </header>
 
-      {/* Hero */}
       <section style={{ ...container, padding: "70px 0 56px" }}>
         <div style={{ color: "#a5b4fc", fontSize: 13, letterSpacing: 0.3 }}>AI • Data • Cybersecurity</div>
 
@@ -882,7 +890,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* Projects */}
       <section id="projects" style={sectionBorder}>
         <div style={{ ...container, padding: "56px 0" }}>
           <h2 style={{ fontSize: 26, margin: 0 }}>Projects</h2>
@@ -913,7 +920,7 @@ export default function App() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search projects (e.g., RAG, FastAPI, Streamlit)..."
+              placeholder="Search projects (e.g., RAG, AI, FastAPI, Streamlit)..."
               style={{
                 width: 320,
                 maxWidth: "100%",
@@ -956,15 +963,26 @@ export default function App() {
                     href={p.live}
                     target={p.live !== "#" ? "_blank" : undefined}
                     rel={p.live !== "#" ? "noreferrer" : undefined}
-                    style={{ ...primaryBtn, padding: "8px 12px", opacity: p.live === "#" ? 0.55 : 1, pointerEvents: p.live === "#" ? "none" : "auto" }}
+                    style={{
+                      ...primaryBtn,
+                      padding: "8px 12px",
+                      opacity: p.live === "#" ? 0.55 : 1,
+                      pointerEvents: p.live === "#" ? "none" : "auto",
+                    }}
                   >
                     Live Demo
                   </a>
+
                   <a
                     href={p.github}
                     target={p.github !== "#" ? "_blank" : undefined}
                     rel={p.github !== "#" ? "noreferrer" : undefined}
-                    style={{ ...linkBtn, padding: "8px 12px", opacity: p.github === "#" ? 0.55 : 1, pointerEvents: p.github === "#" ? "none" : "auto" }}
+                    style={{
+                      ...linkBtn,
+                      padding: "8px 12px",
+                      opacity: p.github === "#" ? 0.55 : 1,
+                      pointerEvents: p.github === "#" ? "none" : "auto",
+                    }}
                   >
                     GitHub
                   </a>
@@ -975,23 +993,13 @@ export default function App() {
         </div>
       </section>
 
-      {/* Metrics */}
       <section id="metrics" style={sectionBorder}>
         <div style={{ ...container, padding: "56px 0" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 14, flexWrap: "wrap", alignItems: "baseline" }}>
-            <h2 style={{ fontSize: 26, margin: 0 }}>Project Metrics</h2>
-            <div style={{ color: "#94a3b8", fontSize: 12 }}>
-              Last evaluated: <span style={{ color: "#93c5fd", fontWeight: 800 }}>{computedMetrics.lastEvaluated}</span>
-            </div>
-          </div>
-
-          <p style={{ marginTop: 8, ...subtleText, maxWidth: 920, lineHeight: 1.65 }}>
-            Auto-calculated from <code style={{ color: "#93c5fd" }}>public/metrics.json</code>.
+          <h2 style={{ fontSize: 26, margin: 0 }}>Project Metrics</h2>
+          <p style={{ marginTop: 8, ...subtleText }}>
+            Auto-calculated from <code style={{ color: "#93c5fd" }}>public/metrics.json</code>. Status:{" "}
+            <span style={{ color: "#94a3b8" }}>{metricsLoadNote}</span>
           </p>
-
-          <div style={{ marginTop: 8, color: "#94a3b8", fontSize: 12 }}>
-            Status: <span style={{ color: "#cbd5f5" }}>{computedMetrics.note}</span>
-          </div>
 
           <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
             <div style={{ ...glass, borderRadius: 18, padding: 16 }}>
@@ -1005,7 +1013,7 @@ export default function App() {
             <div style={{ ...glass, borderRadius: 18, padding: 16 }}>
               <div style={{ color: "#93c5fd", fontWeight: 800, fontSize: 13 }}>Quality</div>
               <div style={{ marginTop: 10, display: "grid", gap: 12 }}>
-                <PercentBar value={toPct(computedMetrics.global.recallAt5)} label="Recall@5 (RAG projects)" />
+                <PercentBar value={toPct(computedMetrics.global.recallAt5)} label="Recall@5" />
                 <PercentBar value={toPct(computedMetrics.global.successRate)} label="Success rate" />
               </div>
             </div>
@@ -1021,76 +1029,73 @@ export default function App() {
                 />
               </div>
             </div>
-
-            <div style={{ ...glass, borderRadius: 18, padding: 16 }}>
-              <div style={{ color: "#93c5fd", fontWeight: 800, fontSize: 13 }}>Evaluation Size</div>
-              <div style={{ marginTop: 10, ...subtleText, lineHeight: 1.7 }}>
-                Total eval runs:{" "}
-                <span style={{ color: "#93c5fd", fontWeight: 900 }}>{computedMetrics.global.evalQueries ?? 0}</span>
-                <div style={{ marginTop: 10, color: "#94a3b8", fontSize: 12 }}>
-                  Tip: add more runs in metrics.json to make your metrics stronger.
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
 
-      {/* Trends */}
       <section id="trends" style={sectionBorder}>
         <div style={{ ...container, padding: "56px 0" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 14, flexWrap: "wrap", alignItems: "baseline" }}>
-            <h2 style={{ fontSize: 26, margin: 0 }}>Trends (Week-over-Week)</h2>
-            {computedTrends.hasTrend ? (
-              <div style={{ color: "#94a3b8", fontSize: 12 }}>
-                Comparing{" "}
-                <span style={{ color: "#93c5fd", fontWeight: 900 }}>{computedTrends.prev.date}</span> →{" "}
-                <span style={{ color: "#93c5fd", fontWeight: 900 }}>{computedTrends.curr.date}</span>
-              </div>
-            ) : (
-              <div style={{ color: "#94a3b8", fontSize: 12 }}>Add 2+ snapshots in metrics_history.json</div>
-            )}
-          </div>
-
-          <div style={{ marginTop: 8, color: "#94a3b8", fontSize: 12 }}>
-            Status: <span style={{ color: "#cbd5f5" }}>{computedTrends.note}</span>
-          </div>
+          <h2 style={{ fontSize: 26, margin: 0 }}>Trends (Δ + %)</h2>
+          <p style={{ marginTop: 8, ...subtleText }}>
+            Loaded from <code style={{ color: "#93c5fd" }}>public/metrics_history.json</code>. Status:{" "}
+            <span style={{ color: "#94a3b8" }}>{historyLoadNote}</span>
+          </p>
 
           {!computedTrends.hasTrend ? (
             <div style={{ marginTop: 14, ...glass, borderRadius: 18, padding: 18, ...subtleText }}>
-              Add <code style={{ color: "#93c5fd" }}>public/metrics_history.json</code> with at least 2 snapshots to see Δ trends.
+              Add 2+ snapshots in metrics_history.json to see Δ and % changes.
             </div>
           ) : (
             <>
-              {/* Global Δ */}
               <div style={{ marginTop: 14, ...glass, borderRadius: 18, padding: 18 }}>
                 <div style={{ fontWeight: 900, fontSize: 16 }}>Global change</div>
 
                 <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <span style={{ ...pill, opacity: 0.9 }}>p50</span>
-                  <TrendPill delta={computedTrends.deltaGlobal.p50LatencyMs} goodWhenHigher={false} suffix=" ms" />
-                  <span style={{ ...pill, opacity: 0.9 }}>p95</span>
-                  <TrendPill delta={computedTrends.deltaGlobal.p95LatencyMs} goodWhenHigher={false} suffix=" ms" />
-                  <span style={{ ...pill, opacity: 0.9 }}>Recall@5</span>
-                  <TrendPill delta={computedTrends.deltaGlobal.recallAt5} goodWhenHigher={true} decimals={2} />
-                  <span style={{ ...pill, opacity: 0.9 }}>Cost/q</span>
-                  <TrendPill delta={computedTrends.deltaGlobal.costPerQueryUsd} goodWhenHigher={false} decimals={3} suffix=" $" />
-                  <span style={{ ...pill, opacity: 0.9 }}>Success</span>
-                  <TrendPill delta={computedTrends.deltaGlobal.successRate} goodWhenHigher={true} decimals={2} />
-                </div>
+                  <span style={pill}>p50</span>
+                  <TrendPill
+                    delta={computedTrends.deltaGlobal.p50LatencyMs}
+                    pctChange={computedTrends.pctGlobal.p50LatencyMs}
+                    goodWhenHigher={false}
+                    suffix=" ms"
+                  />
 
-                <div style={{ marginTop: 10, color: "#94a3b8", fontSize: 12 }}>
-                  Green = improvement. For latency/cost, lower is better.
+                  <span style={pill}>p95</span>
+                  <TrendPill
+                    delta={computedTrends.deltaGlobal.p95LatencyMs}
+                    pctChange={computedTrends.pctGlobal.p95LatencyMs}
+                    goodWhenHigher={false}
+                    suffix=" ms"
+                  />
+
+                  <span style={pill}>Recall@5</span>
+                  <TrendPill
+                    delta={computedTrends.deltaGlobal.recallAt5}
+                    pctChange={computedTrends.pctGlobal.recallAt5}
+                    goodWhenHigher={true}
+                    decimals={2}
+                  />
+
+                  <span style={pill}>Cost/q</span>
+                  <TrendPill
+                    delta={computedTrends.deltaGlobal.costPerQueryUsd}
+                    pctChange={computedTrends.pctGlobal.costPerQueryUsd}
+                    goodWhenHigher={false}
+                    decimals={3}
+                    suffix=" $"
+                  />
+
+                  <span style={pill}>Success</span>
+                  <TrendPill
+                    delta={computedTrends.deltaGlobal.successRate}
+                    pctChange={computedTrends.pctGlobal.successRate}
+                    goodWhenHigher={true}
+                    decimals={2}
+                  />
                 </div>
               </div>
 
-              {/* Per-project Δ */}
               <div style={{ marginTop: 14, ...glass, borderRadius: 18, padding: 18 }}>
                 <div style={{ fontWeight: 900, fontSize: 16 }}>Per-project change</div>
-                <p style={{ marginTop: 6, ...subtleText }}>
-                  Sorted by “most improved” (lower p95/cost + higher recall/success).
-                </p>
-
                 <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
                   {computedTrends.deltaProjects.map((p) => (
                     <div
@@ -1108,122 +1113,65 @@ export default function App() {
                       </div>
 
                       <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-                        <span style={{ ...pill, opacity: 0.9 }}>p95</span>
-                        <TrendPill delta={p.delta.p95LatencyMs} goodWhenHigher={false} suffix=" ms" />
-                        <span style={{ ...pill, opacity: 0.9 }}>Recall@5</span>
-                        <TrendPill delta={p.delta.recallAt5} goodWhenHigher={true} decimals={2} />
-                        <span style={{ ...pill, opacity: 0.9 }}>Cost/q</span>
-                        <TrendPill delta={p.delta.costPerQueryUsd} goodWhenHigher={false} decimals={3} suffix=" $" />
-                        <span style={{ ...pill, opacity: 0.9 }}>Success</span>
-                        <TrendPill delta={p.delta.successRate} goodWhenHigher={true} decimals={2} />
+                        <span style={pill}>p95</span>
+                        <TrendPill
+                          delta={p.delta.p95LatencyMs}
+                          pctChange={p.pct.p95LatencyMs}
+                          goodWhenHigher={false}
+                          suffix=" ms"
+                        />
+
+                        <span style={pill}>Recall@5</span>
+                        <TrendPill
+                          delta={p.delta.recallAt5}
+                          pctChange={p.pct.recallAt5}
+                          goodWhenHigher={true}
+                          decimals={2}
+                        />
+
+                        <span style={pill}>Cost/q</span>
+                        <TrendPill
+                          delta={p.delta.costPerQueryUsd}
+                          pctChange={p.pct.costPerQueryUsd}
+                          goodWhenHigher={false}
+                          decimals={3}
+                          suffix=" $"
+                        />
+
+                        <span style={pill}>Success</span>
+                        <TrendPill
+                          delta={p.delta.successRate}
+                          pctChange={p.pct.successRate}
+                          goodWhenHigher={true}
+                          decimals={2}
+                        />
                       </div>
                     </div>
                   ))}
                 </div>
-
-                <details style={{ marginTop: 12 }}>
-                  <summary style={{ cursor: "pointer", color: "#cbd5f5", fontWeight: 800, listStyle: "none", outline: "none" }}>
-                    metrics_history.json format (copy this)
-                  </summary>
-
-                  <pre
-                    style={{
-                      marginTop: 10,
-                      padding: 12,
-                      borderRadius: 14,
-                      background: "rgba(2,6,23,0.35)",
-                      border: "1px solid rgba(148,163,184,0.18)",
-                      overflowX: "auto",
-                      color: "#cbd5f5",
-                      fontSize: 12,
-                      lineHeight: 1.6,
-                    }}
-                  >
-{`{
-  "snapshots": [
-    {
-      "date": "2026-02-24",
-      "projects": [
-        {
-          "name": "Real Estate RAG Assistant",
-          "type": "RAG",
-          "runs": [
-            { "latencyMs": 2600, "recallAt5": 0.78, "tokens": 910, "costUsd": 0.008, "success": true },
-            { "latencyMs": 2400, "recallAt5": 0.80, "tokens": 880, "costUsd": 0.007, "success": true }
-          ]
-        }
-      ]
-    },
-    {
-      "date": "2026-03-03",
-      "projects": [
-        {
-          "name": "Real Estate RAG Assistant",
-          "type": "RAG",
-          "runs": [
-            { "latencyMs": 2100, "recallAt5": 0.85, "tokens": 820, "costUsd": 0.006, "success": true },
-            { "latencyMs": 2600, "recallAt5": 0.80, "tokens": 880, "costUsd": 0.007, "success": true }
-          ]
-        }
-      ]
-    }
-  ]
-}`}
-                  </pre>
-                </details>
               </div>
             </>
           )}
         </div>
       </section>
 
-      {/* Education + Certs + Publications */}
       <section id="education" style={sectionBorder}>
         <div style={{ ...container, padding: "56px 0" }}>
           <h2 style={{ fontSize: 26, margin: 0 }}>Educational Background</h2>
 
-          <div style={{ marginTop: 16, position: "relative", paddingLeft: 22 }}>
-            <div
-              style={{
-                position: "absolute",
-                left: 8,
-                top: 6,
-                bottom: 6,
-                width: 2,
-                background: "linear-gradient(180deg, rgba(59,130,246,0.9), rgba(14,165,233,0.9))",
-                borderRadius: 2,
-              }}
-            />
-            {education.map((e, idx) => (
-              <div key={idx} style={{ position: "relative", marginBottom: 18 }}>
-                <div
-                  style={{
-                    position: "absolute",
-                    left: -2,
-                    top: 18,
-                    width: 18,
-                    height: 18,
-                    borderRadius: "50%",
-                    background:
-                      "radial-gradient(circle at 30% 30%, rgba(147,197,253,1) 0%, rgba(59,130,246,1) 40%, rgba(14,165,233,1) 100%)",
-                    boxShadow: "0 8px 22px rgba(0,0,0,0.35)",
-                    border: "1px solid rgba(255,255,255,0.18)",
-                  }}
-                />
-                <div style={{ ...glass, borderRadius: 18, padding: 18 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                    <div style={{ fontWeight: 900, fontSize: 16 }}>{e.degree}</div>
-                    <div style={{ color: "#93c5fd", fontSize: 13 }}>{e.period}</div>
-                  </div>
-                  <div style={{ marginTop: 6, ...subtleText, fontWeight: 800 }}>{e.school}</div>
-                  {e.details?.length ? (
-                    <ul style={{ marginTop: 10, paddingLeft: 18, ...subtleText, lineHeight: 1.6 }}>
-                      {e.details.map((d, i) => (
-                        <li key={i}>{d}</li>
-                      ))}
-                    </ul>
-                  ) : null}
+          <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
+            {education.map((e, i) => (
+              <div key={i} style={{ ...glass, borderRadius: 18, padding: 18 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+                  <div style={{ fontWeight: 900 }}>{e.degree}</div>
+                  <div style={{ color: "#93c5fd", fontSize: 13, fontWeight: 800 }}>{e.period}</div>
                 </div>
+                <div style={{ marginTop: 6, ...subtleText, fontWeight: 800 }}>{e.school}</div>
+                <ul style={{ marginTop: 10, paddingLeft: 18, ...subtleText, lineHeight: 1.6 }}>
+                  {e.details.map((d, idx) => (
+                    <li key={idx}>{d}</li>
+                  ))}
+                </ul>
               </div>
             ))}
           </div>
@@ -1232,15 +1180,7 @@ export default function App() {
             <div style={{ fontWeight: 900, fontSize: 16 }}>Certifications</div>
             <div style={{ display: "grid", gap: 14, marginTop: 14 }}>
               {certifications.map((c) => (
-                <div
-                  key={c.title}
-                  style={{
-                    padding: 14,
-                    borderRadius: 16,
-                    background: "rgba(2, 6, 23, 0.45)",
-                    border: "1px solid rgba(148,163,184,0.18)",
-                  }}
-                >
+                <div key={c.title} style={{ padding: 14, borderRadius: 16, background: "rgba(2, 6, 23, 0.45)", border: "1px solid rgba(148,163,184,0.18)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                       <LogoChip code={c.logo} />
@@ -1254,7 +1194,7 @@ export default function App() {
                   </div>
 
                   <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    {c.skills?.map((s) => (
+                    {c.skills.map((s) => (
                       <span key={s} style={pill}>{s}</span>
                     ))}
                   </div>
@@ -1275,15 +1215,7 @@ export default function App() {
 
             <div style={{ display: "grid", gap: 14, marginTop: 14 }}>
               {publications.map((pub) => (
-                <div
-                  key={pub.key}
-                  style={{
-                    padding: 14,
-                    borderRadius: 16,
-                    background: "rgba(2, 6, 23, 0.45)",
-                    border: "1px solid rgba(148,163,184,0.18)",
-                  }}
-                >
+                <div key={pub.key} style={{ padding: 14, borderRadius: 16, background: "rgba(2, 6, 23, 0.45)", border: "1px solid rgba(148,163,184,0.18)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                     <div style={{ fontWeight: 900 }}>{pub.title}</div>
                     <div style={{ color: "#93c5fd", fontSize: 13 }}>{pub.year}</div>
@@ -1295,16 +1227,21 @@ export default function App() {
                     <a href={pub.link} target="_blank" rel="noreferrer" style={{ ...primaryBtn, padding: "8px 12px", borderRadius: 12 }}>
                       View Publication
                     </a>
+
                     {pub.pdfUrl ? (
                       <a href={pub.pdfUrl} target="_blank" rel="noreferrer" style={{ ...linkBtn, padding: "8px 12px", borderRadius: 12 }}>
                         Download PDF
                       </a>
                     ) : (
-                      <span style={{ ...linkBtn, padding: "8px 12px", borderRadius: 12, opacity: 0.55 }}>PDF Not Available</span>
+                      <span style={{ ...linkBtn, padding: "8px 12px", borderRadius: 12, opacity: 0.55 }}>
+                        PDF Not Available
+                      </span>
                     )}
+
                     <a href={pub.doiUrl} target="_blank" rel="noreferrer" style={{ ...linkBtn, padding: "8px 12px", borderRadius: 12 }}>
                       DOI
                     </a>
+
                     <button
                       onClick={() => copyText(pub.apa, `apa_${pub.key}`)}
                       style={{ ...linkBtn, padding: "8px 12px", borderRadius: 12, background: "rgba(2,6,23,0.35)", cursor: "pointer" }}
@@ -1312,26 +1249,6 @@ export default function App() {
                       {copiedKey === `apa_${pub.key}` ? "Copied!" : "Copy APA"}
                     </button>
                   </div>
-
-                  <details style={{ marginTop: 12 }}>
-                    <summary style={{ cursor: "pointer", color: "#cbd5f5", fontWeight: 800, listStyle: "none", outline: "none" }}>
-                      View APA citation
-                    </summary>
-                    <div
-                      style={{
-                        marginTop: 10,
-                        ...subtleText,
-                        lineHeight: 1.6,
-                        background: "rgba(15,23,42,0.55)",
-                        border: "1px solid rgba(148,163,184,0.18)",
-                        borderRadius: 14,
-                        padding: 12,
-                        fontSize: 13,
-                      }}
-                    >
-                      {pub.apa}
-                    </div>
-                  </details>
                 </div>
               ))}
             </div>
@@ -1339,7 +1256,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* Resume */}
       <section id="resume" style={sectionBorder}>
         <div style={{ ...container, padding: "56px 0" }}>
           <h2 style={{ fontSize: 26, margin: 0 }}>Resume</h2>
@@ -1353,12 +1269,10 @@ export default function App() {
         </div>
       </section>
 
-      {/* Contact */}
       <section id="contact" style={sectionBorder}>
         <div style={{ ...container, padding: "56px 0" }}>
           <h2 style={{ fontSize: 26, margin: 0 }}>Contact</h2>
           <p style={{ marginTop: 8, ...subtleText }}>Kindly feel free to reach out via email or LinkedIn.</p>
-
           <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
             <a href="mailto:basilatiyire@gmail.com" style={linkBtn}>
               <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>

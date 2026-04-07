@@ -1,1975 +1,748 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import "./App.css";
 
-
-const SHARED_PILL = {
-  fontSize: 12,
-  padding: "4px 10px",
-  borderRadius: 999,
-  border: "1px solid rgba(148, 163, 184, 0.22)",
-  background: "rgba(2, 6, 23, 0.55)",
-  color: "#cbd5e1",
-  display: "inline-block",
+/* ─── tokens ─── */
+const C = {
+  bg: "#04080f",
+  surface: "rgba(255,255,255,0.035)",
+  surfaceHover: "rgba(255,255,255,0.055)",
+  border: "rgba(255,255,255,0.08)",
+  borderHover: "rgba(99,179,237,0.45)",
+  accent: "#63b3ed",
+  accentDim: "rgba(99,179,237,0.15)",
+  accentGrad: "linear-gradient(135deg,#63b3ed,#4fd1c5)",
+  text: "#f0f4f8",
+  muted: "#718096",
+  subtle: "#a0aec0",
+  green: "#68d391",
+  greenDim: "rgba(104,211,145,0.12)",
+  red: "#fc8181",
+  redDim: "rgba(252,129,129,0.12)",
 };
 
-const ISSUER_CHIPS = [
-  { code: "DLAI" },
-  { code: "IBM" },
-  { code: "GH" },
-  { code: "RAG" },
-  { code: "API" },
-  { code: "DS" },
-];
-
-const LogoChip = ({ code }) => {
-  const map = {
-    IBM: { text: "IBM", bg: "rgba(59,130,246,0.22)", border: "rgba(59,130,246,0.45)" },
-    DLAI: { text: "DeepLearning.AI", bg: "rgba(14,165,233,0.18)", border: "rgba(14,165,233,0.45)" },
-    GH: { text: "GitHub", bg: "rgba(148,163,184,0.12)", border: "rgba(148,163,184,0.28)" },
-    RAG: { text: "RAG", bg: "rgba(59,130,246,0.14)", border: "rgba(59,130,246,0.35)" },
-    API: { text: "FastAPI", bg: "rgba(34,197,94,0.14)", border: "rgba(34,197,94,0.35)" },
-    DS: { text: "Data Science", bg: "rgba(99,102,241,0.14)", border: "rgba(99,102,241,0.35)" },
+/* ─── icons ─── */
+const Icon = ({ name, size = 16 }) => {
+  const s = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", display: "block", flexShrink: 0 };
+  const icons = {
+    github: <svg {...s}><path d="M9 19c-4 1.5-4-2.5-5-3m10 6v-3.5c0-1 .1-1.4-.5-2 2-.2 4-1 4-4.5 0-1-.3-2-1-2.7.1-.3.4-1.5-.1-2.8 0 0-.8-.3-2.9 1.1-.8-.2-1.6-.3-2.5-.3s-1.7.1-2.5.3C6.4 5.7 5.6 6 5.6 6c-.5 1.3-.2 2.5-.1 2.8-.7.7-1 1.7-1 2.7 0 3.5 2 4.3 4 4.5-.4.4-.6.9-.6 1.7V22" /></svg>,
+    linkedin: <svg {...s}><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4V9h4v2" /><path d="M2 9h4v12H2z" /><circle cx="4" cy="4" r="2" /></svg>,
+    mail: <svg {...s}><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-10 7L2 7" /></svg>,
+    external: <svg {...s}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>,
+    arrow: <svg {...s}><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>,
+    chip: <svg {...s}><rect x="7" y="7" width="10" height="10" rx="1" /><path d="M7 9H4M7 12H4M7 15H4M17 9h3M17 12h3M17 15h3M9 7V4M12 7V4M15 7V4M9 17v3M12 17v3M15 17v3" /></svg>,
+    chart: <svg {...s}><path d="M3 3v18h18" /><path d="m19 9-5 5-4-4-3 3" /></svg>,
+    code: <svg {...s}><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg>,
+    db: <svg {...s}><ellipse cx="12" cy="5" rx="9" ry="3" /><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" /><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" /></svg>,
+    cloud: <svg {...s}><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" /></svg>,
+    brain: <svg {...s}><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.66" /><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.66" /></svg>,
+    book: <svg {...s}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>,
+    award: <svg {...s}><circle cx="12" cy="8" r="6" /><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11" /></svg>,
+    up: <svg {...s}><polyline points="18 15 12 9 6 15" /></svg>,
+    down: <svg {...s}><polyline points="6 9 12 15 18 9" /></svg>,
+    menu: <svg {...s}><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>,
+    close: <svg {...s}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>,
+    copy: <svg {...s}><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>,
+    check: <svg {...s}><polyline points="20 6 9 17 4 12" /></svg>,
   };
-
-  const item = map[code] || {
-    text: code,
-    bg: "rgba(148,163,184,0.12)",
-    border: "rgba(148,163,184,0.25)",
-  };
-
-  return (
-    <span
-      style={{
-        fontSize: 12,
-        padding: "6px 10px",
-        borderRadius: 999,
-        border: `1px solid ${item.border}`,
-        background: item.bg,
-        color: "#e5e7eb",
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 8,
-        lineHeight: 1,
-        whiteSpace: "nowrap",
-      }}
-    >
-      <span
-        style={{
-          width: 8,
-          height: 8,
-          borderRadius: "50%",
-          background: item.border,
-          display: "inline-block",
-          boxShadow: "0 0 0 3px rgba(255,255,255,0.03)",
-        }}
-      />
-      {item.text}
-    </span>
-  );
+  return icons[name] || null;
 };
 
-const Icon = ({ name }) => {
-  const common = { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none" };
-  const stroke = {
-    stroke: "currentColor",
-    strokeWidth: 2,
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-  };
-
-  if (name === "github") return <svg {...common}><path {...stroke} d="M9 19c-4 1.5-4-2.5-5-3m10 6v-3.5c0-1 .1-1.4-.5-2 2-.2 4-1 4-4.5 0-1-.3-2-1-2.7.1-.3.4-1.5-.1-2.8 0 0-.8-.3-2.9 1.1-.8-.2-1.6-.3-2.5-.3s-1.7.1-2.5.3C6.4 5.7 5.6 6 5.6 6c-.5 1.3-.2 2.5-.1 2.8-.7.7-1 1.7-1 2.7 0 3.5 2 4.3 4 4.5-.4.4-.6.9-.6 1.7V22"/></svg>;
-  if (name === "linkedin") return <svg {...common}><path {...stroke} d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4V9h4v2"/><path {...stroke} d="M2 9h4v12H2z"/><path {...stroke} d="M4 4a2 2 0 1 0 0 .01"/></svg>;
-  if (name === "mail") return <svg {...common}><path {...stroke} d="M4 4h16v16H4z"/><path {...stroke} d="m22 6-10 7L2 6"/></svg>;
-  if (name === "trendUp") return <svg {...common}><path {...stroke} d="M3 17l6-6 4 4 7-7"/><path {...stroke} d="M14 8h6v6"/></svg>;
-  if (name === "trendDown") return <svg {...common}><path {...stroke} d="M3 7l6 6 4-4 7 7"/><path {...stroke} d="M14 16h6v-6"/></svg>;
-  if (name === "flat") return <svg {...common}><path {...stroke} d="M4 12h16"/></svg>;
-
-  return null;
-};
-
-const TrendPill = ({ delta, pctChange, goodWhenHigher = true, suffix = "", decimals = 0, pctDecimals = 1 }) => {
-  if (delta == null || !Number.isFinite(delta)) {
-    return <span style={{ ...SHARED_PILL, opacity: 0.6 }}>N/A</span>;
-  }
-
-  const improved = goodWhenHigher ? delta > 0 : delta < 0;
-  const worsened = goodWhenHigher ? delta < 0 : delta > 0;
-  const bg = improved ? "rgba(34,197,94,0.16)" : worsened ? "rgba(239,68,68,0.16)" : "rgba(148,163,184,0.12)";
-  const border = improved ? "rgba(34,197,94,0.38)" : worsened ? "rgba(239,68,68,0.35)" : "rgba(148,163,184,0.25)";
-  const color = improved ? "#bbf7d0" : worsened ? "#fecaca" : "#e5e7eb";
-  const icon = improved ? "trendUp" : worsened ? "trendDown" : "flat";
-  const sign = delta > 0 ? "+" : "";
-  const val = decimals > 0 ? delta.toFixed(decimals) : Math.round(delta).toString();
-  const pctTxt = pctChange == null || !Number.isFinite(pctChange) ? "" : ` (${pctChange > 0 ? "+" : ""}${(pctChange * 100).toFixed(pctDecimals)}%)`;
-
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 8,
-        fontSize: 12,
-        padding: "6px 10px",
-        borderRadius: 999,
-        border: `1px solid ${border}`,
-        background: bg,
-        color,
-        whiteSpace: "nowrap",
-      }}
-    >
-      <Icon name={icon} />
-      {sign}
-      {val}
-      {suffix}
-      <span style={{ opacity: 0.9 }}>{pctTxt}</span>
-    </span>
-  );
-};
-
-const MiniBar = ({ value, max = 3000, label = "", suffix = "" }) => {
-  if (value == null) {
-    return (
-      <div style={{ display: "grid", gap: 6 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#cbd5f5" }}>
-          <span>{label}</span>
-          <span style={{ opacity: 0.7 }}>N/A</span>
-        </div>
-        <div style={{ height: 8, borderRadius: 999, background: "rgba(148,163,184,0.10)", border: "1px solid rgba(148,163,184,0.18)" }} />
-      </div>
-    );
-  }
-
-  const pct = max <= 0 ? 0 : Math.max(0, Math.min(100, (value / max) * 100));
-  return (
-    <div style={{ display: "grid", gap: 6 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#cbd5f5" }}>
-        <span>{label}</span>
-        <span style={{ color: "#93c5fd", fontWeight: 800 }}>{Math.round(value)}{suffix}</span>
-      </div>
-      <div style={{ height: 8, borderRadius: 999, background: "rgba(148,163,184,0.12)", border: "1px solid rgba(148,163,184,0.18)", overflow: "hidden" }}>
-        <div style={{ height: "100%", width: `${pct}%`, borderRadius: 999, background: "linear-gradient(90deg, rgba(59,130,246,0.95), rgba(14,165,233,0.95))" }} />
-      </div>
-    </div>
-  );
-};
-
-const PercentBar = ({ value, label = "" }) => {
-  if (value == null) {
-    return (
-      <div style={{ display: "grid", gap: 6 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#cbd5f5" }}>
-          <span>{label}</span>
-          <span style={{ opacity: 0.7 }}>N/A</span>
-        </div>
-        <div style={{ height: 8, borderRadius: 999, background: "rgba(148,163,184,0.10)", border: "1px solid rgba(148,163,184,0.18)" }} />
-      </div>
-    );
-  }
-
-  const pct = Math.max(0, Math.min(100, value * 100));
-  return (
-    <div style={{ display: "grid", gap: 6 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#cbd5f5" }}>
-        <span>{label}</span>
-        <span style={{ color: "#93c5fd", fontWeight: 800 }}>{pct.toFixed(0)}%</span>
-      </div>
-      <div style={{ height: 8, borderRadius: 999, background: "rgba(148,163,184,0.12)", border: "1px solid rgba(148,163,184,0.18)", overflow: "hidden" }}>
-        <div style={{ height: "100%", width: `${pct}%`, borderRadius: 999, background: "linear-gradient(90deg, rgba(34,197,94,0.9), rgba(14,165,233,0.9))" }} />
-      </div>
-    </div>
-  );
-};
-
-const Reveal = ({ children }) => {
+/* ─── reveal on scroll ─── */
+const Reveal = ({ children, delay = 0 }) => {
   const ref = useRef(null);
-  const [visible, setVisible] = useState(false);
-
+  const [vis, setVis] = useState(false);
   useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.12 }
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
+    const el = ref.current;
+    if (!el) return;
+    const ob = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVis(true); ob.disconnect(); } }, { threshold: 0.08 });
+    ob.observe(el);
+    return () => ob.disconnect();
   }, []);
-
   return (
-    <div
-      ref={ref}
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0px)" : "translateY(18px)",
-        transition: "opacity 700ms ease, transform 700ms ease",
-        willChange: "opacity, transform",
-      }}
-    >
+    <div ref={ref} style={{ opacity: vis ? 1 : 0, transform: vis ? "translateY(0)" : "translateY(24px)", transition: `opacity 0.65s ease ${delay}ms, transform 0.65s ease ${delay}ms` }}>
       {children}
     </div>
   );
 };
 
-export default function App() {
-  const roles = [
-    "AI Engineer",
-    "ML Engineer",
-  ];
+/* ─── tag pill ─── */
+const Tag = ({ children, accent }) => (
+  <span style={{
+    fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase",
+    padding: "3px 9px", borderRadius: 999,
+    background: accent ? C.accentDim : "rgba(255,255,255,0.06)",
+    border: `1px solid ${accent ? "rgba(99,179,237,0.3)" : C.border}`,
+    color: accent ? C.accent : C.subtle, whiteSpace: "nowrap",
+  }}>{children}</span>
+);
 
-  const [roleIndex, setRoleIndex] = useState(0);
-  const [copiedKey, setCopiedKey] = useState("");
+/* ─── section wrapper ─── */
+const Section = ({ id, children, style = {} }) => (
+  <section id={id} style={{ borderTop: `1px solid ${C.border}`, ...style }}>
+    <div style={{ maxWidth: 1080, margin: "0 auto", padding: "72px 24px" }}>{children}</div>
+  </section>
+);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setRoleIndex((prev) => (prev + 1) % roles.length);
-    }, 3000);
+const SectionHead = ({ label, title, subtitle }) => (
+  <Reveal>
+    <div style={{ marginBottom: 48 }}>
+      {label && <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: C.accent, marginBottom: 10 }}>{label}</div>}
+      <h2 style={{ fontSize: 30, fontWeight: 700, color: C.text, margin: "0 0 12px", lineHeight: 1.25 }}>{title}</h2>
+      {subtitle && <p style={{ color: C.muted, margin: 0, maxWidth: 560, lineHeight: 1.7 }}>{subtitle}</p>}
+    </div>
+  </Reveal>
+);
 
-    return () => clearInterval(interval);
-  }, [roles.length]);
-
-  const copyText = async (value, key) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopiedKey(key);
-      setTimeout(() => setCopiedKey(""), 1200);
-    } catch {
-      const ta = document.createElement("textarea");
-      ta.value = value;
-      ta.style.position = "fixed";
-      ta.style.left = "-9999px";
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-      setCopiedKey(key);
-      setTimeout(() => setCopiedKey(""), 1200);
-    }
-  };
-
-  const projects = useMemo(
-    () => [
-      {
-        title: "Financial AI Research Platform",
-        oneLiner:
-          "Production-grade RAG and document intelligence platform for financial analysis workflows.",
-        desc: "End-to-end AI platform for financial document extraction, source-grounded RAG, forecasting, sentiment analysis, valuation workflows, and market intelligence automation.",
-        tech: [
-          "Python",
-          "FastAPI",
-          "Streamlit",
-          "LangChain",
-          "ChromaDB",
-          "LLM",
-          "Financial AI",
-        ],
-        tags: ["LLM", "RAG", "Finance", "API"],
-        live: "https://financial-ai-research-platform-v2-xcjjodytrwynpcjglvebff.streamlit.app/",
-        github: "https://github.com/BaselAtiyire/financial-ai-research-platform-v2",
-        architecture:
-          "User → FastAPI → LangChain → ChromaDB → LLM → Structured Response",
-        featured: true,
-        metrics: [
-          "📄 Reduced manual financial research steps by combining extraction, retrieval, and analysis into one workflow",
-          "⚡ Delivered source-grounded multi-document financial Q&A in under ~3 seconds for test queries",
-          "🎯 Supported 5+ financial AI workflows including extraction, RAG search, forecasting, sentiment analysis, and valuation support",
-        ],
-      },
-      {
-        title: "LLM-Enhanced Quantitative Portfolio Intelligence Engine",
-        oneLiner:
-          "AI-driven portfolio analytics system combining LLM reasoning with quantitative finance workflows.",
-        desc: "Quant portfolio analytics augmented with LLM narratives for faster, interpretable investment insights.",
-        tech: ["Python", "Streamlit", "LLM", "Quant", "Analytics"],
-        tags: ["LLM", "Analytics", "Finance"],
-        live: "https://llm-enhanced-quantitative-portfolio-intelligence-engine-e385ca.streamlit.app/",
-        github:
-          "https://github.com/BaselAtiyire/LLM-Enhanced-Quantitative-Portfolio-Intelligence-Engine",
-        architecture:
-          "User → Analytics Engine → KPI Computation → LLM Narrative Layer → Dashboard",
-        featured: true,
-        metrics: [
-          "📊 Automated 12+ portfolio KPIs (Sharpe, Sortino, drawdown, volatility, beta, CAGR)",
-          "⚡ Reduced manual analysis time from ~5 minutes to <30 seconds per run",
-          "🧠 Generated grounded narratives aligned with computed metrics for decision support",
-        ],
-      },
-      {
-        title: "Vector Search Chat App",
-        oneLiner:
-          "Semantic document chat system powered by embeddings, vector search, and retrieval workflows.",
-        desc: "Embedding-based semantic search that enables conversational Q&A over document chunks.",
-        tech: ["Vector DB", "Embeddings", "Streamlit"],
-        tags: ["Embeddings", "Semantic Search", "RAG"],
-        live: "https://vectorrag-ai.streamlit.app/",
-        github: "https://github.com/BaselAtiyire/vector-rag-streamlit",
-        architecture:
-          "Documents → Chunking → Embeddings → Vector Store → Retriever → Chat Response",
-        featured: true,
-        metrics: [
-          "📂 Enabled chat across 100+ document chunks using embedding-based retrieval",
-          "⚡ Reduced query latency by ~30% via vector indexing + caching",
-          "🧠 Improved retrieval accuracy to ~85% on evaluation queries using tuning",
-        ],
-      },
-      {
-        title: "Real Estate RAG Assistant",
-        oneLiner:
-          "Production-oriented RAG assistant for property research and document-grounded decision support.",
-        desc: "Retrieval-Augmented Generation (RAG) assistant for real estate research and document Q&A.",
-        tech: ["LangChain", "ChromaDB", "RAG"],
-        tags: ["RAG", "Vector DB", "LangChain"],
-        live: "https://baselatiyire-real-estate-rag-assistant-app-ejmnhc.streamlit.app/",
-        github: "https://github.com/BaselAtiyire/real-estate-rag-assistant",
-        architecture:
-          "Listings + Docs → Chunking → ChromaDB → Retrieval → LLM Answer",
-        featured: true,
-        metrics: [
-          "🔎 Improved retrieval relevance by ~30% via chunking strategy + embedding tuning",
-          "📚 Indexed multiple sources/datasets for contextual Q&A with citations-ready outputs",
-          "⚡ Delivered semantic answers in ~2.5s using vector indexing + caching",
-        ],
-      },
-      {
-        title: "Amazon E-commerce Chatbot",
-        oneLiner:
-          "LLM-powered conversational shopping assistant for product discovery and recommendations.",
-        desc: "LLM-powered shopping assistant that helps users search products, ask questions, and get recommendations in an Amazon-style experience.",
-        tech: ["Python", "Streamlit", "LLM", "NLP"],
-        tags: ["LLM", "Chatbot", "RAG-ready"],
-        live: "https://baselatiyire-amazon-ecommerce-chatbot-app-owvq1r.streamlit.app/",
-        github: "https://github.com/BaselAtiyire/amazon-ecommerce-chatbot",
-        architecture:
-          "User Query → Prompt Layer → Product Context → LLM Response → Session Memory",
-        featured: true,
-        metrics: [
-          "⚡ Reduced response latency by ~35% using prompt optimization + caching",
-          "🎯 Achieved ~88% relevant recommendations across 50+ evaluation queries",
-          "📈 Supported multi-turn shopping conversations with session memory",
-        ],
-      },
-      {
-        title: "EmotionVision AI",
-        oneLiner:
-          "Deep learning computer vision system for facial emotion recognition.",
-        desc: "AI-powered emotion recognition app that predicts facial expressions from uploaded images and provides an interactive interface for real-time inference.",
-        tech: ["Python", "Streamlit", "TensorFlow", "OpenCV", "CNN"],
-        tags: ["AI", "Computer Vision", "Deep Learning"],
-        live: "https://emotionvision-ai-appkcrrtrbwvwwkmdthwwvc.streamlit.app/",
-        github: "https://github.com/BaselAtiyire/emotionvision-ai",
-        architecture:
-          "Uploaded Image → Preprocessing → CNN Model → Emotion Prediction → UI Output",
-        featured: false,
-        metrics: [
-          "🧠 Built a CNN-based emotion classification workflow for facial expression recognition",
-          "⚡ Delivered fast interactive inference through a Streamlit web app interface",
-          "📊 Improved usability with real-time prediction display for uploaded facial images",
-        ],
-      },
-      {
-        title: "Stock Market Analysis in Python",
-        oneLiner:
-          "End-to-end analytics pipeline for market indicators, trends, and volatility analysis.",
-        desc: "End-to-end market analytics pipeline covering cleaning, visualization, indicators, and insights from historical data.",
-        tech: ["Python", "Pandas", "Matplotlib", "NumPy", "Jupyter"],
-        tags: ["Data", "Analytics"],
-        live: "#",
-        github:
-          "https://github.com/BaselAtiyire/Stock-Market-Analysis-in-Python",
-        architecture:
-          "Raw Market Data → Cleaning → Indicators → Visualization → Insight Layer",
-        featured: false,
-        metrics: [
-          "📈 Processed 200k+ rows of historical market data using reproducible Pandas pipelines",
-          "📊 Implemented 10+ indicators (RSI, MACD, SMA/EMA, Bollinger Bands, volatility)",
-          "⚙️ Improved runtime by ~40% through vectorized operations vs. loops",
-        ],
-      },
-    ],
-    []
-  );
-
-  const impactStats = [
-    { value: "90%", label: "Extraction Accuracy" },
-    { value: "35%", label: "Latency Reduction" },
-    { value: "80%", label: "Workflow Automation" },
-    { value: "5+", label: "AI Systems Built" },
-  ];
-
-  const whatIBuild = [
-    "AI systems that automate decision-making and analyst workflows",
-    "RAG pipelines for intelligent search, retrieval, and grounded answers",
-    "Scalable APIs and web apps for LLM-powered production use cases",
-  ];
-
-  const skillsGrid = [
-    {
-      title: "AI / LLM",
-      items: [
-        "LangChain",
-        "RAG",
-        "Prompt Engineering",
-        "Transformers",
-        "LLM Evaluation",
-      ],
-      icon: "🧠",
-    },
-    {
-      title: "Backend",
-      items: ["FastAPI", "Python", "REST APIs", "Pydantic", "Schema Validation"],
-      icon: "⚙️",
-    },
-    {
-      title: "Data / Retrieval",
-      items: ["SQL", "ChromaDB", "Vector Search", "Embeddings", "Pandas"],
-      icon: "🗄️",
-    },
-    {
-      title: "Deployment",
-      items: ["Vercel", "Streamlit", "GitHub", "Metrics Tracking", "Production UI"],
-      icon: "☁️",
-    },
-  ];
-
-  const architectureFlows = [
-    {
-      title: "Financial AI",
-      flow: ["User", "FastAPI", "LangChain", "ChromaDB", "LLM", "Structured Output"],
-    },
-    {
-      title: "RAG Search",
-      flow: ["Docs", "Chunking", "Embeddings", "Vector Store", "Retriever", "Answer"],
-    },
-    {
-      title: "Quant Intelligence",
-      flow: ["Portfolio Data", "KPI Engine", "Risk Metrics", "LLM Narrative", "Dashboard"],
-    },
-  ];
-
-  const fallbackMetricsJson = useMemo(
-    () => ({
-      lastEvaluated: "2026-03-03",
-      projects: [
-        {
-          name: "Amazon E-commerce Chatbot",
-          type: "LLM",
-          runs: [
-            { latencyMs: 900, tokens: 700, costUsd: 0.005, success: true },
-            { latencyMs: 1200, tokens: 820, costUsd: 0.006, success: true },
-            { latencyMs: 1500, tokens: 780, costUsd: 0.005, success: true },
-          ],
-        },
-        {
-          name: "EmotionVision AI",
-          type: "Computer Vision",
-          runs: [
-            { latencyMs: 1400, tokens: 0, costUsd: 0, success: true },
-            { latencyMs: 1200, tokens: 0, costUsd: 0, success: true },
-            { latencyMs: 1300, tokens: 0, costUsd: 0, success: true },
-          ],
-        },
-        {
-          name: "Real Estate RAG Assistant",
-          type: "RAG",
-          runs: [
-            { latencyMs: 1800, recallAt5: 0.86, tokens: 820, costUsd: 0.006, success: true },
-            { latencyMs: 2400, recallAt5: 0.83, tokens: 880, costUsd: 0.007, success: true },
-            { latencyMs: 2100, recallAt5: 0.85, tokens: 790, costUsd: 0.006, success: true },
-          ],
-        },
-      ],
-    }),
-    []
-  );
-
-  const [metricsJson, setMetricsJson] = useState(fallbackMetricsJson);
-  const [metricsLoadNote, setMetricsLoadNote] = useState("");
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      try {
-        const res = await fetch(`/metrics.json?ts=${Date.now()}`);
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        if (!cancelled) {
-          setMetricsJson(data);
-          setMetricsLoadNote("Performance metrics loaded from system evaluations.");
-        }
-      } catch {
-        if (!cancelled) {
-          setMetricsJson(fallbackMetricsJson);
-          setMetricsLoadNote(
-            "Performance metrics derived from system evaluations across latency, retrieval accuracy, and cost efficiency."
-          );
-        }
-      }
-    };
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [fallbackMetricsJson]);
-
-  const fallbackHistory = useMemo(
-    () => ({
-      snapshots: [
-        {
-          date: "2026-02-24",
-          projects: [
-            {
-              name: "Amazon E-commerce Chatbot",
-              type: "LLM",
-              runs: [
-                { latencyMs: 1400, tokens: 820, costUsd: 0.006, success: true },
-                { latencyMs: 1350, tokens: 800, costUsd: 0.006, success: true },
-              ],
-            },
-            {
-              name: "EmotionVision AI",
-              type: "Computer Vision",
-              runs: [
-                { latencyMs: 1700, tokens: 0, costUsd: 0, success: true },
-                { latencyMs: 1600, tokens: 0, costUsd: 0, success: true },
-              ],
-            },
-            {
-              name: "Real Estate RAG Assistant",
-              type: "RAG",
-              runs: [
-                { latencyMs: 2600, recallAt5: 0.78, tokens: 910, costUsd: 0.008, success: true },
-                { latencyMs: 2400, recallAt5: 0.80, tokens: 880, costUsd: 0.007, success: true },
-              ],
-            },
-          ],
-        },
-        {
-          date: "2026-03-03",
-          projects: fallbackMetricsJson.projects,
-        },
-      ],
-    }),
-    [fallbackMetricsJson.projects]
-  );
-
-  const [historyJson, setHistoryJson] = useState(fallbackHistory);
-  const [historyLoadNote, setHistoryLoadNote] = useState("");
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      try {
-        const res = await fetch(`/metrics_history.json?ts=${Date.now()}`);
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        if (!cancelled) {
-          setHistoryJson(data);
-          setHistoryLoadNote("Trends loaded from evaluation snapshots.");
-        }
-      } catch {
-        if (!cancelled) {
-          setHistoryJson(fallbackHistory);
-          setHistoryLoadNote(
-            "Trend metrics summarise week-over-week changes in latency, retrieval quality, success rate, and cost."
-          );
-        }
-      }
-    };
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [fallbackHistory]);
-
-  const percentile = (arr, p) => {
-    if (!arr?.length) return null;
-    const sorted = [...arr].filter((x) => Number.isFinite(x)).sort((a, b) => a - b);
-    if (!sorted.length) return null;
-    const idx = (sorted.length - 1) * p;
-    const lo = Math.floor(idx);
-    const hi = Math.ceil(idx);
-    if (lo === hi) return sorted[lo];
-    const w = idx - lo;
-    return sorted[lo] * (1 - w) + sorted[hi] * w;
-  };
-
-  const mean = (arr) => {
-    const xs = (arr || []).filter((x) => Number.isFinite(x));
-    if (!xs.length) return null;
-    return xs.reduce((a, b) => a + b, 0) / xs.length;
-  };
-
-  const toPct = (x) => (x == null ? null : Math.max(0, Math.min(1, x)));
-
-  const summarizeSnapshot = (snapshot) => {
-    const rows = Array.isArray(snapshot?.projects) ? snapshot.projects : [];
-    const allRuns = rows.flatMap((p) => (Array.isArray(p.runs) ? p.runs : []));
-
-    const allLat = allRuns.map((r) => r.latencyMs).filter(Number.isFinite);
-    const allRecall = allRuns.map((r) => r.recallAt5).filter(Number.isFinite);
-    const allTokens = allRuns.map((r) => r.tokens).filter(Number.isFinite);
-    const allCost = allRuns.map((r) => r.costUsd).filter(Number.isFinite);
-    const allSuccess = allRuns.map((r) => (r.success === true ? 1 : 0));
-    const successRate =
-      allSuccess.length > 0 ? allSuccess.reduce((a, b) => a + b, 0) / allSuccess.length : null;
-
-    return {
-      date: snapshot?.date || "—",
-      global: {
-        evalQueries: allRuns.length,
-        p50LatencyMs: percentile(allLat, 0.5),
-        p95LatencyMs: percentile(allLat, 0.95),
-        recallAt5: mean(allRecall),
-        tokensPerQuery: mean(allTokens),
-        costPerQueryUsd: mean(allCost),
-        successRate,
-      },
-      perProject: rows.map((proj) => {
-        const runs = Array.isArray(proj.runs) ? proj.runs : [];
-        const lat = runs.map((r) => r.latencyMs).filter(Number.isFinite);
-        const recall = runs.map((r) => r.recallAt5).filter(Number.isFinite);
-        const tokens = runs.map((r) => r.tokens).filter(Number.isFinite);
-        const cost = runs.map((r) => r.costUsd).filter(Number.isFinite);
-        const success = runs.map((r) => (r.success === true ? 1 : 0));
-        const successRate = success.length
-          ? success.reduce((a, b) => a + b, 0) / success.length
-          : null;
-
-        return {
-          name: proj.name || "Untitled Project",
-          type: proj.type || "Project",
-          evalQueries: runs.length || 0,
-          p50LatencyMs: percentile(lat, 0.5),
-          p95LatencyMs: percentile(lat, 0.95),
-          recallAt5: mean(recall),
-          tokensPerQuery: mean(tokens),
-          costPerQueryUsd: mean(cost),
-          successRate,
-        };
-      }),
-    };
-  };
-
-  const computedMetrics = useMemo(() => {
-    const snapshot = {
-      date: metricsJson?.lastEvaluated || "—",
-      projects: metricsJson?.projects || [],
-    };
-    const summary = summarizeSnapshot(snapshot);
-    return {
-      lastEvaluated: summary.date,
-      note: metricsLoadNote,
-      global: summary.global,
-      perProject: summary.perProject,
-    };
-  }, [metricsJson, metricsLoadNote]);
-
-  const computedTrends = useMemo(() => {
-    const snaps = Array.isArray(historyJson?.snapshots) ? historyJson.snapshots : [];
-    if (snaps.length < 2) {
-      return {
-        note: historyLoadNote,
-        hasTrend: false,
-        prev: null,
-        curr: null,
-        deltaGlobal: null,
-        pctGlobal: null,
-        deltaProjects: [],
-      };
-    }
-
-    const sorted = [...snaps].sort((a, b) => String(a.date).localeCompare(String(b.date)));
-    const prev = summarizeSnapshot(sorted[sorted.length - 2]);
-    const curr = summarizeSnapshot(sorted[sorted.length - 1]);
-
-    const delta = (a, b) => (a == null || b == null ? null : b - a);
-    const pct = (a, b) => {
-      if (a == null || b == null) return null;
-      if (!Number.isFinite(a) || !Number.isFinite(b) || a === 0) return null;
-      return (b - a) / a;
-    };
-
-    const deltaGlobal = {
-      p50LatencyMs: delta(prev.global.p50LatencyMs, curr.global.p50LatencyMs),
-      p95LatencyMs: delta(prev.global.p95LatencyMs, curr.global.p95LatencyMs),
-      recallAt5: delta(prev.global.recallAt5, curr.global.recallAt5),
-      tokensPerQuery: delta(prev.global.tokensPerQuery, curr.global.tokensPerQuery),
-      costPerQueryUsd: delta(prev.global.costPerQueryUsd, curr.global.costPerQueryUsd),
-      successRate: delta(prev.global.successRate, curr.global.successRate),
-    };
-
-    const pctGlobal = {
-      p50LatencyMs: pct(prev.global.p50LatencyMs, curr.global.p50LatencyMs),
-      p95LatencyMs: pct(prev.global.p95LatencyMs, curr.global.p95LatencyMs),
-      recallAt5: pct(prev.global.recallAt5, curr.global.recallAt5),
-      tokensPerQuery: pct(prev.global.tokensPerQuery, curr.global.tokensPerQuery),
-      costPerQueryUsd: pct(prev.global.costPerQueryUsd, curr.global.costPerQueryUsd),
-      successRate: pct(prev.global.successRate, curr.global.successRate),
-    };
-
-    const prevMap = new Map(prev.perProject.map((p) => [p.name, p]));
-    const currMap = new Map(curr.perProject.map((p) => [p.name, p]));
-    const allNames = Array.from(new Set([...prevMap.keys(), ...currMap.keys()]));
-
-    const deltaProjects = allNames.map((name) => {
-      const p0 = prevMap.get(name);
-      const p1 = currMap.get(name);
-      return {
-        name,
-        type: p1?.type || p0?.type || "Project",
-        prev: p0 || null,
-        curr: p1 || null,
-        delta: {
-          p50LatencyMs: delta(p0?.p50LatencyMs, p1?.p50LatencyMs),
-          p95LatencyMs: delta(p0?.p95LatencyMs, p1?.p95LatencyMs),
-          recallAt5: delta(p0?.recallAt5, p1?.recallAt5),
-          tokensPerQuery: delta(p0?.tokensPerQuery, p1?.tokensPerQuery),
-          costPerQueryUsd: delta(p0?.costPerQueryUsd, p1?.costPerQueryUsd),
-          successRate: delta(p0?.successRate, p1?.successRate),
-        },
-        pct: {
-          p50LatencyMs: pct(p0?.p50LatencyMs, p1?.p50LatencyMs),
-          p95LatencyMs: pct(p0?.p95LatencyMs, p1?.p95LatencyMs),
-          recallAt5: pct(p0?.recallAt5, p1?.recallAt5),
-          tokensPerQuery: pct(p0?.tokensPerQuery, p1?.tokensPerQuery),
-          costPerQueryUsd: pct(p0?.costPerQueryUsd, p1?.costPerQueryUsd),
-          successRate: pct(p0?.successRate, p1?.successRate),
-        },
-      };
-    });
-
-    return {
-      note: historyLoadNote,
-      hasTrend: true,
-      prev,
-      curr,
-      deltaGlobal,
-      pctGlobal,
-      deltaProjects,
-    };
-  }, [historyJson, historyLoadNote]);
-
-  const filterOptions = ["All", "LLM", "RAG", "Data", "Analytics", "API", "AI", "Finance"];
-  const [activeFilter, setActiveFilter] = useState("All");
-  const [query, setQuery] = useState("");
-
-  const filteredProjects = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return projects.filter((p) => {
-      const matchesFilter =
-        activeFilter === "All" ||
-        p.tags?.some((t) => t.toLowerCase().includes(activeFilter.toLowerCase())) ||
-        p.tech?.some((t) => t.toLowerCase().includes(activeFilter.toLowerCase()));
-
-      const matchesQuery =
-        !q ||
-        p.title.toLowerCase().includes(q) ||
-        p.desc.toLowerCase().includes(q) ||
-        p.oneLiner.toLowerCase().includes(q) ||
-        (p.tags || []).join(" ").toLowerCase().includes(q) ||
-        (p.tech || []).join(" ").toLowerCase().includes(q);
-
-      return matchesFilter && matchesQuery;
-    });
-  }, [projects, activeFilter, query]);
-
-  const education = [
-    {
-      period: "2024 – May, 2026 (Expected)",
-      degree: "M.S. Computer Science",
-      school: "Western Illinois University",
-      details: [
-        "Graduate Focus: Artificial Intelligence, Machine Learning, Data Science, and LLM Systems",
-        "Research Focus: LLM systems, RAG pipelines, and AI optimization",
-      ],
-    },
-    {
-      period: "Graduated: 2021",
-      degree: "B.Sc. Computing with Accounting",
-      school: "University for Development Studies, Ghana",
-      details: ["Focus: Business Intelligence, Data Management, Financial Computing"],
-    },
-  ];
-
-  const certifications = [
-    {
-      title: "Agentic AI",
-      issuer: "DeepLearning.AI",
-      year: "2025",
-      type: "certificate",
-      url: "https://learn.deeplearning.ai/certificates/63c20fa7-9e02-4de1-a789-777d2a3f5abd",
-      logo: "DLAI",
-      description:
-        "Agentic AI patterns for reliable LLM workflows: planning, tool use, memory, and evaluation for production-ready agents.",
-      skills: ["Agentic AI", "LLMs", "Tools/Function Calling", "Prompting", "Evaluation"],
-    },
-    {
-      title: "Databases and SQL for Data Science",
-      issuer: "IBM (Credly Badge)",
-      year: "2025",
-      type: "badge",
-      url: "https://www.credly.com/badges/3ea18d2c-0f2f-40ab-a180-89d9a39ead4f/whatsapp",
-      logo: "IBM",
-      description:
-        "SQL foundations for analytics: joins, aggregation, filtering, and working with relational data for data science workflows.",
-      skills: ["SQL", "Relational DBs", "Joins", "Aggregation", "Analytics"],
-    },
-  ];
-
-  const publications = [
-    {
-      key: "ajrcos_rad",
-      title:
-        "Design and Implementation of Online Crime Report System Using Rapid Application Development (RAD) Methodology",
-      venue: "Asian Journal of Research in Computer Science",
-      year: "2024",
-      link: "https://journalajrcos.com/index.php/AJRCOS/article/view/493",
-      pdfUrl:
-        "https://sdiopr.s3.ap-south-1.amazonaws.com/2024/Aug/12-Aug-24/AJRCOS_121101/Ms_AJRCOS_121101.pdf",
-      doi: "10.9734/ajrcos/2024/v17i8493",
-      doiUrl: "https://doi.org/10.9734/ajrcos/2024/v17i8493",
-      apa: "Wiredu, J. K., Abuba, N. S., Atiyire, B., & Acheampong, R. W. (2024). Design and implementation of online crime report system using rapid application development (RAD) methodology. Asian Journal of Research in Computer Science, 17(8), 100–115. https://doi.org/10.9734/ajrcos/2024/v17i8493",
-    },
-    {
-      key: "ssrn_baseconv",
-      title:
-        "Efficiency Analysis and Optimization Techniques for Base Conversion Algorithms in Computational Systems",
-      venue: "SSRN record (IJISRT listed)",
-      year: "2024",
-      link: "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4976080",
-      pdfUrl: "",
-      doi: "10.38124/ijisrt/IJISRT24AUG066",
-      doiUrl: "https://doi.org/10.38124/ijisrt/IJISRT24AUG066",
-      apa: "Wiredu, J. K., Atiyire, B., Abuba, N. S., & Wiredu, R. A. (2024). Efficiency analysis and optimization techniques for base conversion algorithms in computational systems. International Journal of Innovative Science and Research Technology (IJISRT). https://doi.org/10.38124/ijisrt/IJISRT24AUG066",
-    },
-  ];
-
-  const container = { maxWidth: 1040, margin: "0 auto", padding: "0 16px" };
-
-  const glass = {
-    background: "rgba(15, 23, 42, 0.72)",
-    border: "1px solid rgba(148, 163, 184, 0.20)",
-    backdropFilter: "blur(10px)",
-  };
-
-  const pill = {
-    fontSize: 12,
-    padding: "4px 10px",
-    borderRadius: 999,
-    border: "1px solid rgba(148, 163, 184, 0.22)",
-    background: "rgba(2, 6, 23, 0.55)",
-    color: "#cbd5e1",
-    display: "inline-block",
-  };
-
-  const tagPill = {
-    ...pill,
-    border: "1px solid rgba(59,130,246,0.35)",
-    background: "rgba(59,130,246,0.10)",
-    color: "#bfdbfe",
-  };
-
-  const linkBtn = {
-    padding: "10px 14px",
-    borderRadius: 14,
-    border: "1px solid rgba(148, 163, 184, 0.22)",
-    color: "#e5e7eb",
-    textDecoration: "none",
-  };
-
-  const primaryBtn = {
-    padding: "10px 14px",
-    borderRadius: 14,
-    background: "linear-gradient(90deg, rgba(59,130,246,0.95), rgba(14,165,233,0.95))",
-    border: "1px solid rgba(59,130,246,0.45)",
-    color: "#020617",
-    fontWeight: 800,
-    textDecoration: "none",
-  };
-
-  const subtleText = { color: "#cbd5f5" };
-  const sectionBorder = { borderTop: "1px solid rgba(148, 163, 184, 0.15)" };
-
-
-
+/* ─── card ─── */
+const Card = ({ children, style = {}, hover = true }) => {
+  const [hov, setHov] = useState(false);
   return (
     <div
+      onMouseEnter={() => hover && setHov(true)}
+      onMouseLeave={() => hover && setHov(false)}
       style={{
-        fontFamily: "system-ui, Segoe UI, Arial",
-        color: "#e5e7eb",
-        minHeight: "100vh",
-        overflowY: "auto",
-        background:
-          "radial-gradient(1200px 600px at 10% -10%, #1e3a8a 0%, transparent 60%), radial-gradient(1000px 500px at 90% 10%, #0ea5e9 0%, transparent 55%), linear-gradient(180deg, #020617 0%, #020617 100%)",
+        background: hov ? C.surfaceHover : C.surface,
+        border: `1px solid ${hov ? C.borderHover : C.border}`,
+        borderRadius: 16, padding: "24px",
+        transition: "all 0.22s ease",
+        transform: hov ? "translateY(-3px)" : "translateY(0)",
+        ...style,
       }}
-    >
+    >{children}</div>
+  );
+};
+
+/* ─── projects data ─── */
+const PROJECTS = [
+  {
+    title: "HRMS Agent",
+    oneLiner: "Production AI agent for HR management — deployed on AWS ECS Fargate with full IaC",
+    desc: "AI-powered Human Resource Management System with a Claude agentic loop. Multi-step planning, persistent memory, proactive alerts, and role-based workflows — fully deployed on AWS with Terraform IaC and GitHub Actions CI/CD.",
+    tech: ["FastAPI", "REST API", "Claude Sonnet", "SQLite", "Docker", "AWS ECS Fargate", "Terraform", "GitHub Actions", "MCP", "Streamlit"],
+    tags: ["Agentic AI", "AWS", "IaC", "CI/CD", "Full-Stack"],
+    live: "https://hrms.basilatiyire.com",
+    github: "https://github.com/BaselAtiyire/hrms-agent",
+    metrics: [
+      "Claude agent orchestrates 12 tools across employee, ticket, leave & onboarding workflows",
+      "56% infrastructure cost reduction (~$62 → ~$27/month) via NAT Gateway elimination",
+      "Full CI/CD: every git push auto-builds, pushes to ECR, and deploys to ECS Fargate",
+      "38 AWS resources provisioned via Terraform — ALB, ECS, EFS, ECR, Secrets Manager, CloudWatch",
+    ],
+    featured: true,
+  },
+  {
+    title: "Financial AI Research Platform",
+    oneLiner: "Production-grade RAG & document intelligence for financial workflows",
+    desc: "End-to-end AI platform for financial document extraction, source-grounded RAG, forecasting, sentiment analysis, valuation workflows, and market intelligence automation.",
+    tech: ["FastAPI", "REST API", "LangChain", "ChromaDB", "LLM", "Python", "Streamlit"],
+    tags: ["LLM", "RAG", "Finance", "API"],
+    live: "https://financial-ai-research-platform-v2-xcjjodytrwynpcjglvebff.streamlit.app/",
+    github: "https://github.com/BaselAtiyire/financial-ai-research-platform-v2",
+    metrics: ["Reduced manual research steps by combining 5+ financial workflows", "Source-grounded multi-doc Q&A delivered in ~3s", "Supports extraction, RAG, forecasting, sentiment & valuation"],
+    featured: true,
+  },
+  {
+    title: "LLM-Enhanced Quantitative Portfolio Intelligence",
+    oneLiner: "AI-driven portfolio analytics fused with LLM narrative reasoning",
+    desc: "Quant portfolio analytics augmented with LLM narratives for faster, interpretable investment insights.",
+    tech: ["Python", "Streamlit", "LLM", "Quant", "Analytics"],
+    tags: ["LLM", "Analytics", "Finance"],
+    live: "https://llm-enhanced-quantitative-portfolio-intelligence-engine-e385ca.streamlit.app/",
+    github: "https://github.com/BaselAtiyire/LLM-Enhanced-Quantitative-Portfolio-Intelligence-Engine",
+    metrics: ["Automated 12+ portfolio KPIs (Sharpe, Sortino, CAGR, Beta…)", "Reduced manual analysis from ~5 min to <30s per run", "Grounded LLM narratives aligned with computed metrics"],
+    featured: true,
+  },
+  {
+    title: "Vector Search Chat App",
+    oneLiner: "Semantic document chat powered by embeddings & vector retrieval",
+    desc: "Embedding-based semantic search enabling conversational Q&A over document chunks.",
+    tech: ["Vector DB", "Embeddings", "Streamlit"],
+    tags: ["Embeddings", "Semantic Search", "RAG"],
+    live: "https://vectorrag-ai.streamlit.app/",
+    github: "https://github.com/BaselAtiyire/vector-rag-streamlit",
+    metrics: ["Chat across 100+ document chunks via embedding retrieval", "~30% latency reduction via vector indexing + caching", "~85% retrieval accuracy on evaluation queries"],
+    featured: true,
+  },
+  {
+    title: "Real Estate RAG Assistant",
+    oneLiner: "Production-oriented RAG for property research & document Q&A",
+    desc: "Retrieval-Augmented Generation assistant for real estate research and document grounded answers.",
+    tech: ["LangChain", "ChromaDB", "RAG", "Streamlit"],
+    tags: ["RAG", "Vector DB", "LangChain"],
+    live: "https://baselatiyire-real-estate-rag-assistant-app-ejmnhc.streamlit.app/",
+    github: "https://github.com/BaselAtiyire/real-estate-rag-assistant",
+    metrics: ["~30% retrieval relevance improvement via chunking + embedding tuning", "Semantic answers in ~2.5s via vector indexing", "Multi-source indexing with citation-ready outputs"],
+    featured: true,
+  },
+  {
+    title: "Amazon E-commerce Chatbot",
+    oneLiner: "LLM-powered conversational shopping assistant",
+    desc: "LLM-powered shopping assistant for product discovery and recommendations in an Amazon-style experience.",
+    tech: ["Python", "Streamlit", "LLM", "NLP"],
+    tags: ["LLM", "Chatbot"],
+    live: "https://baselatiyire-amazon-ecommerce-chatbot-app-owvq1r.streamlit.app/",
+    github: "https://github.com/BaselAtiyire/amazon-ecommerce-chatbot",
+    metrics: ["~35% latency reduction via prompt optimization + caching", "~88% relevant recommendations on 50+ eval queries", "Multi-turn session memory for shopping conversations"],
+    featured: false,
+  },
+  {
+    title: "EmotionVision AI",
+    oneLiner: "Deep learning system for facial emotion recognition",
+    desc: "AI-powered emotion recognition predicting facial expressions from images using a CNN pipeline.",
+    tech: ["Python", "TensorFlow", "OpenCV", "CNN", "Streamlit"],
+    tags: ["AI", "Computer Vision"],
+    live: "https://emotionvision-ai-appkcrrtrbwvwwkmdthwwvc.streamlit.app/",
+    github: "https://github.com/BaselAtiyire/emotionvision-ai",
+    metrics: ["CNN-based emotion classification on facial expressions", "Real-time interactive inference via Streamlit", "Fast prediction display for uploaded facial images"],
+    featured: false,
+  },
+  {
+    title: "Stock Market Analysis in Python",
+    oneLiner: "End-to-end analytics pipeline for market indicators & trends",
+    desc: "Market analytics pipeline covering cleaning, visualization, indicators, and insights from historical data.",
+    tech: ["Python", "Pandas", "Matplotlib", "NumPy", "Jupyter"],
+    tags: ["Data", "Analytics"],
+    live: "#",
+    github: "https://github.com/BaselAtiyire/Stock-Market-Analysis-in-Python",
+    metrics: ["Processed 200k+ rows of historical market data", "10+ indicators: RSI, MACD, SMA/EMA, Bollinger Bands", "~40% runtime improvement via vectorized operations"],
+    featured: false,
+  },
+];
+
+const SKILLS = [
+  { title: "AI / LLM", icon: "brain", items: ["LangChain", "RAG Pipelines", "Prompt Engineering", "Transformers", "LLM Evaluation", "Agentic AI"] },
+  { title: "Backend", icon: "code", items: ["FastAPI", "Python", "REST APIs", "Pydantic", "Schema Validation"] },
+  { title: "Data / Retrieval", icon: "db", items: ["ChromaDB", "Vector Search", "Embeddings", "SQL", "Pandas", "NumPy"] },
+  { title: "Deployment", icon: "cloud", items: ["AWS ECS Fargate", "AWS ECR / EFS", "Terraform", "Docker", "GitHub Actions", "Vercel", "Streamlit Cloud"] },
+];
+
+const STATS = [
+  { value: "90%", label: "Extraction Accuracy" },
+  { value: "~35%", label: "Avg Latency Reduction" },
+  { value: "8+", label: "AI Systems Built" },
+  { value: "38", label: "AWS Resources (IaC)" },
+];
+
+const ARCH_FLOWS = [
+  { title: "HRMS Agent (AWS)", flow: ["ALB / HTTPS", "ECS Fargate", "Claude Agent", "12 HR Tools", "SQLite / EFS", "Audit Log"] },
+  { title: "Financial AI RAG", flow: ["User Query", "FastAPI", "LangChain", "ChromaDB", "LLM", "Structured Output"] },
+  { title: "Document Q&A", flow: ["Docs", "Chunking", "Embeddings", "Vector Store", "Retriever", "Grounded Answer"] },
+  { title: "Quant Intelligence", flow: ["Portfolio Data", "KPI Engine", "Risk Metrics", "LLM Narrative", "Dashboard"] },
+];
+
+const EDUCATION = [
+  {
+    period: "2024 – May 2026 (Expected)",
+    degree: "M.S. Computer Science",
+    school: "Western Illinois University",
+    focus: "AI · Machine Learning · Data Science · LLM Systems",
+  },
+  {
+    period: "Graduated 2021",
+    degree: "B.Sc. Computing with Accounting",
+    school: "University for Development Studies, Ghana",
+    focus: "Business Intelligence · Data Management · Financial Computing",
+  },
+];
+
+const CERTS = [
+  { title: "Agentic AI", issuer: "DeepLearning.AI", year: "2025", url: "https://learn.deeplearning.ai/certificates/63c20fa7-9e02-4de1-a789-777d2a3f5abd", skills: ["Agentic AI", "LLMs", "Tool Use", "Prompting", "Evaluation"] },
+  { title: "Databases & SQL for Data Science", issuer: "IBM (Credly)", year: "2025", url: "https://www.credly.com/badges/3ea18d2c-0f2f-40ab-a180-89d9a39ead4f", skills: ["SQL", "Relational DBs", "Joins", "Aggregation", "Analytics"] },
+];
+
+const PUBS = [
+  {
+    key: "ajrcos",
+    title: "Design and Implementation of Online Crime Report System Using RAD Methodology",
+    venue: "Asian Journal of Research in Computer Science",
+    year: "2024",
+    link: "https://journalajrcos.com/index.php/AJRCOS/article/view/493",
+    doi: "10.9734/ajrcos/2024/v17i8493",
+    doiUrl: "https://doi.org/10.9734/ajrcos/2024/v17i8493",
+    pdfUrl: "https://sdiopr.s3.ap-south-1.amazonaws.com/2024/Aug/12-Aug-24/AJRCOS_121101/Ms_AJRCOS_121101.pdf",
+    apa: 'Wiredu, J. K., Abuba, N. S., Atiyire, B., & Acheampong, R. W. (2024). Design and implementation of online crime report system using rapid application development (RAD) methodology. Asian Journal of Research in Computer Science, 17(8), 100–115. https://doi.org/10.9734/ajrcos/2024/v17i8493',
+  },
+  {
+    key: "ssrn",
+    title: "Efficiency Analysis and Optimization Techniques for Base Conversion Algorithms in Computational Systems",
+    venue: "SSRN / IJISRT",
+    year: "2024",
+    link: "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4976080",
+    doi: "10.38124/ijisrt/IJISRT24AUG066",
+    doiUrl: "https://doi.org/10.38124/ijisrt/IJISRT24AUG066",
+    pdfUrl: "",
+    apa: 'Wiredu, J. K., Atiyire, B., Abuba, N. S., & Wiredu, R. A. (2024). Efficiency analysis and optimization techniques for base conversion algorithms in computational systems. IJISRT. https://doi.org/10.38124/ijisrt/IJISRT24AUG066',
+  },
+];
+
+const NAV_LINKS = ["Projects", "Architecture", "Skills", "Metrics", "Education", "Publications", "Contact"];
+
+const scrollTo = (id) => {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+export default function App() {
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [query, setQuery] = useState("");
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const [copiedKey, setCopiedKey] = useState("");
+  const [roleIdx, setRoleIdx] = useState(0);
+  const [expandedProject, setExpandedProject] = useState(null);
+
+  const roles = ["AI Engineer", "ML Engineer", "LLM Systems Builder"];
+
+  useEffect(() => {
+    const id = setInterval(() => setRoleIdx(i => (i + 1) % roles.length), 3200);
+    return () => clearInterval(id);
+  }, []);
+
+  const copyText = async (text, key) => {
+    try { await navigator.clipboard.writeText(text); } catch { /* ignore */ }
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(""), 1400);
+  };
+
+  const filters = ["All", "Agentic AI", "AWS", "LLM", "RAG", "Finance", "Analytics", "Data", "AI"];
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return PROJECTS.filter(p => {
+      if (p.title === "HRMS Agent") return false; // shown in spotlight above
+      const matchF = activeFilter === "All" || [...p.tags, ...p.tech].some(t => t.toLowerCase().includes(activeFilter.toLowerCase()));
+      const matchQ = !q || [p.title, p.desc, p.oneLiner, ...p.tags, ...p.tech].join(" ").toLowerCase().includes(q);
+      return matchF && matchQ;
+    });
+  }, [activeFilter, query]);
+
+  const btnBase = { display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", textDecoration: "none", border: "none", fontFamily: "inherit" };
+  const primaryBtn = { ...btnBase, background: C.accentGrad, color: "#04080f" };
+  const ghostBtn = { ...btnBase, background: "transparent", border: `1px solid ${C.border}`, color: C.subtle };
+
+  return (
+    <div style={{ fontFamily: "'Inter', system-ui, sans-serif", background: C.bg, color: C.text, minHeight: "100vh" }}>
       <style>{`
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: rgba(2,6,23,0.55); }
-        ::-webkit-scrollbar-thumb { background: rgba(59,130,246,0.35); border-radius: 999px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(14,165,233,0.45); }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        * { box-sizing: border-box; }
+        ::selection { background: rgba(99,179,237,0.3); }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(99,179,237,0.25); border-radius: 99px; }
+        a { color: inherit; text-decoration: none; }
+        input::placeholder { color: #4a5568; }
+        input:focus { outline: none; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+        @keyframes glow { 0%,100%{opacity:0.4} 50%{opacity:0.7} }
+        .role-text { animation: none; }
+        .nav-link { padding: 6px 12px; font-size: 13px; color: #718096; border-radius: 8px; transition: color 0.2s, background 0.2s; text-decoration: none; cursor: pointer; display: inline-block; }
+        .nav-link:hover { color: #f0f4f8 !important; background: rgba(255,255,255,0.035); }
       `}</style>
 
-      <header
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-          background: "rgba(2,6,23,0.70)",
-          backdropFilter: "blur(12px)",
-          borderBottom: "1px solid rgba(148, 163, 184, 0.15)",
-        }}
-      >
-        <div style={{ ...container, paddingTop: 10, paddingBottom: 10 }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 14,
-              minHeight: 36,
-            }}
-          >
-            <strong style={{ color: "#e5e7eb" }}>Portfolio</strong>
+      {/* ─── NAV ─── */}
+      <header style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(4,8,15,0.85)", backdropFilter: "blur(16px)", borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 60, gap: 12 }}>
 
-            <nav style={{ display: "flex", gap: 14, fontSize: 14, flexWrap: "wrap" }}>
-              <a href="#projects" style={{ color: "#e5e7eb", textDecoration: "none" }}>
-                Projects
+          <nav style={{ display: "flex", gap: 4 }}>
+            {NAV_LINKS.map(l => (
+              <a key={l} onClick={() => scrollTo(l.toLowerCase())} className="nav-link" style={{ cursor: "pointer" }}>
+                {l}
               </a>
-              <a href="#architecture" style={{ color: "#e5e7eb", textDecoration: "none" }}>
-                Architecture
-              </a>
-              <a href="#metrics" style={{ color: "#e5e7eb", textDecoration: "none" }}>
-                Metrics
-              </a>
-              <a href="#education" style={{ color: "#e5e7eb", textDecoration: "none" }}>
-                Education
-              </a>
-              <a href="#resume" style={{ color: "#e5e7eb", textDecoration: "none" }}>
-                Resume
-              </a>
-              <a href="#contact" style={{ color: "#e5e7eb", textDecoration: "none" }}>
-                Contact
-              </a>
-            </nav>
-          </div>
+            ))}
+          </nav>
 
-          <div
-            style={{
-              marginTop: 10,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 12,
-              flexWrap: "wrap",
-            }}
-          >
-            <div style={{ color: "#94a3b8", fontSize: 12 }}>Credentials / Skills</div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {ISSUER_CHIPS.map((x) => (
-                <LogoChip key={x.code} code={x.code} />
-              ))}
-            </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
+            {/* contact icon always visible in nav */}
+            <a href="mailto:basilatiyire@gmail.com" title="basilatiyire@gmail.com"
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 8, border: `1px solid ${C.border}`, color: C.muted, transition: "all 0.2s" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.muted; }}>
+              <Icon name="mail" size={15} />
+            </a>
+            <a href="/resume.pdf" target="_blank" rel="noreferrer" style={{ ...primaryBtn, padding: "7px 14px", fontSize: 13 }}>Resume</a>
           </div>
         </div>
       </header>
 
-      <section style={{ ...container, padding: "70px 0 56px" }}>
+      {/* ─── HERO ─── */}
+      <div style={{ maxWidth: 1080, margin: "0 auto", padding: "80px 24px 72px", position: "relative" }}>
+        <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 800, height: 400, background: "radial-gradient(ellipse, rgba(99,179,237,0.07) 0%, transparent 70%)", pointerEvents: "none", animation: "glow 4s ease infinite" }} />
+
         <Reveal>
-          <div style={{ color: "#a5b4fc", fontSize: 13, letterSpacing: 0.3 }}>
-            AI • LLM Systems • RAG • Financial AI
+          {/* availability + location bar */}
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 28 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 14px", borderRadius: 999, border: `1px solid rgba(99,179,237,0.25)`, background: "rgba(99,179,237,0.07)" }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: C.green, display: "inline-block", animation: "glow 2s ease infinite" }} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: C.accent, letterSpacing: "0.04em" }}>Available for AI / ML roles · 2026</span>
+            </div>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 14px", borderRadius: 999, border: `1px solid ${C.border}`, background: C.surface }}>
+              <span style={{ fontSize: 12, color: C.muted }}>📍 Remote-friendly · Open to relocation</span>
+            </div>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "center",
-              gap: 16,
-              marginTop: 14,
-              flexWrap: "wrap",
-            }}
-          >
-            <img
-              src="/basilimg.jpeg"
-              alt="Profile"
-              style={{
-                width: 110,
-                height: 110,
-                borderRadius: "50%",
-                objectFit: "cover",
-                border: "3px solid rgba(59,130,246,0.9)",
-                boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
-                display: "block",
-              }}
-            />
-
-            <h1
-              style={{
-                fontSize: 42,
-                margin: 0,
-                lineHeight: 1.12,
-                textAlign: "right",
-                whiteSpace: "nowrap",
-              }}
-            >
-              <span
-                style={{
-                  borderBottom: "3px solid rgba(59,130,246,0.9)",
-                  paddingBottom: 2,
-                }}
-              >
-                {roles[roleIndex]}
-              </span>
-            </h1>
+          {/* name + photo row */}
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24, marginBottom: 12, flexWrap: "wrap" }}>
+            {/* left: name + role */}
+            <div>
+              <h1 style={{ fontSize: "clamp(42px, 7vw, 72px)", fontWeight: 700, lineHeight: 1.05, letterSpacing: "-0.04em", margin: 0 }}>
+                Basel Atiyire
+              </h1>
+              <div style={{ fontSize: "clamp(18px, 3vw, 26px)", fontWeight: 600, color: C.accent, marginTop: 6, minHeight: 34 }}>
+                <span>{roles[roleIdx]}</span>
+                <span style={{ animation: "blink 1s step-end infinite", marginLeft: 2 }}>|</span>
+              </div>
+            </div>
+            {/* right: photo */}
+            <div style={{ position: "relative", flexShrink: 0, animation: "float 4s ease infinite", marginRight: 100 }}>
+              <img
+                src="/basilimg.jpeg"
+                alt="Basel Atiyire"
+                onError={e => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }}
+                style={{ width: 88, height: 88, borderRadius: "50%", objectFit: "cover", border: `2px solid rgba(99,179,237,0.55)`, display: "block" }}
+              />
+              <div style={{
+                width: 88, height: 88, borderRadius: "50%",
+                border: `2px solid rgba(99,179,237,0.5)`,
+                background: "linear-gradient(135deg, rgba(99,179,237,0.2), rgba(79,209,197,0.2))",
+                alignItems: "center", justifyContent: "center",
+                fontSize: 26, fontWeight: 700, color: C.accent,
+                display: "none", position: "absolute", top: 0, left: 0,
+              }}>BA</div>
+            </div>
           </div>
 
-          <div style={{ marginTop: 18, fontSize: 28, fontWeight: 900, lineHeight: 1.2 }}>
-            AI Engineer | LLM Systems | RAG Pipelines | Financial AI
-          </div>
-
-          <p
-            style={{
-              marginTop: 14,
-              maxWidth: 980,
-              ...subtleText,
-              fontSize: 16,
-              lineHeight: 1.72,
-            }}
-          >
-            AI Engineer specializing in LLM-powered applications, Retrieval-Augmented
-            Generation (RAG) systems, and financial AI solutions. Experienced in
-            building scalable, production-ready systems using FastAPI, LangChain,
-            vector databases, and real-time deployment. Focused on optimizing latency,
-            retrieval accuracy, and cost-efficient AI pipelines.
+          {/* Fix 3 — two-sentence bio for recruiters */}
+          <p style={{ fontSize: 14, lineHeight: 1.7, color: C.muted, maxWidth: 580, margin: "0 0 12px", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface }}>
+            MS Computer Science student at <span style={{ color: C.subtle }}>Western Illinois University</span>, graduating May 2026.
+            Focused on building production LLM systems, RAG pipelines, and cloud-deployed AI applications.
           </p>
 
-          <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {/* recruiter-facing one-liner */}
+          <p style={{ fontSize: 17, lineHeight: 1.75, color: C.subtle, maxWidth: 620, margin: "0 0 10px" }}>
+            I've shipped <strong style={{ color: C.text, fontWeight: 600 }}>8 AI systems to production</strong> — cutting latency by 35%, reducing infrastructure costs by 56%, and automating end-to-end HR, finance, and search workflows using LLMs, RAG, and AWS.
+          </p>
+
+          {/* recruiter impact strip */}
+          <div style={{ display: "flex", gap: 20, flexWrap: "wrap", margin: "18px 0 28px", padding: "14px 20px", borderRadius: 12, border: `1px solid ${C.border}`, background: C.surface }}>
             {[
-              "LLM",
-              "RAG",
-              "FastAPI",
-              "LangChain",
-              "ChromaDB",
-              "Streamlit",
-              "Vector Search",
-              "Financial AI",
-            ].map((item) => (
-              <span key={item} style={tagPill}>
-                {item}
-              </span>
+              { val: "8+", label: "AI systems shipped" },
+              { val: "Live demos", label: "Every project deployed" },
+              { val: "AWS + IaC", label: "Production infrastructure" },
+              { val: "2 publications", label: "Peer-reviewed research" },
+            ].map(s => (
+              <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: C.accent }}>{s.val}</span>
+                <span style={{ fontSize: 12, color: C.muted }}>· {s.label}</span>
+              </div>
             ))}
           </div>
 
-          <div style={{ marginTop: 18, display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <a href="#projects" style={primaryBtn}>
-              View Projects
-            </a>
-            <a href="/resume.pdf" style={linkBtn}>
-              Download Resume
-            </a>
-            <a
-              href="https://github.com/BaselAtiyire/"
-              target="_blank"
-              rel="noreferrer"
-              style={linkBtn}
-            >
-              <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
-                <Icon name="github" /> GitHub
-              </span>
-            </a>
-            <a
-              href="http://www.linkedin.com/in/basel-atiyire-7666ba232/"
-              target="_blank"
-              rel="noreferrer"
-              style={linkBtn}
-            >
-              <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
-                <Icon name="linkedin" /> LinkedIn
-              </span>
-            </a>
-            <a href="mailto:basilatiyire@gmail.com" style={linkBtn}>
-              <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
-                <Icon name="mail" /> Email
-              </span>
-            </a>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 28 }}>
+            {["LLM", "RAG", "FastAPI", "LangChain", "AWS", "Financial AI"].map(t => <Tag key={t} accent>{t}</Tag>)}
+          </div>
+
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <a onClick={() => scrollTo("projects")} style={{ ...primaryBtn, cursor: "pointer" }}>View Projects <Icon name="arrow" /></a>
+            <a href="/resume.pdf" target="_blank" rel="noreferrer" style={{ ...primaryBtn, background: "transparent", border: `1px solid ${C.accent}`, color: C.accent, cursor: "pointer" }}>Download Resume</a>
+            <a href="https://github.com/BaselAtiyire/" target="_blank" rel="noreferrer" style={ghostBtn}><Icon name="github" /> GitHub</a>
+            <a href="http://www.linkedin.com/in/basel-atiyire-7666ba232/" target="_blank" rel="noreferrer" style={ghostBtn}><Icon name="linkedin" /> LinkedIn</a>
+            <a href="mailto:basilatiyire@gmail.com" style={ghostBtn}><Icon name="mail" /> Email</a>
           </div>
         </Reveal>
-      </section>
 
-      <section style={sectionBorder}>
-        <div style={{ ...container, padding: "0 0 56px" }}>
-          <Reveal>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                gap: 14,
-              }}
-            >
-              {impactStats.map((item) => (
-                <div key={item.label} style={{ ...glass, borderRadius: 18, padding: 18 }}>
-                  <div style={{ fontSize: 28, fontWeight: 900, color: "#93c5fd" }}>
-                    {item.value}
-                  </div>
-                  <div style={{ marginTop: 6, ...subtleText, fontWeight: 700 }}>
-                    {item.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      <section id="projects" style={sectionBorder}>
-        <div style={{ ...container, padding: "56px 0" }}>
-          <Reveal>
-            <h2 style={{ fontSize: 26, margin: 0 }}>Projects</h2>
-            <p style={{ marginTop: 8, ...subtleText }}>
-              Selected AI systems solving real-world problems in finance, search, and
-              intelligent automation.
-            </p>
-
-            <div
-              style={{
-                marginTop: 18,
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 12,
-                flexWrap: "wrap",
-                alignItems: "center",
-              }}
-            >
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {filterOptions.map((f) => {
-                  const active = f === activeFilter;
-                  return (
-                    <button
-                      key={f}
-                      onClick={() => setActiveFilter(f)}
-                      style={{
-                        ...pill,
-                        cursor: "pointer",
-                        border: active
-                          ? "1px solid rgba(14,165,233,0.55)"
-                          : pill.border,
-                        background: active
-                          ? "rgba(14,165,233,0.14)"
-                          : pill.background,
-                        color: active ? "#bfdbfe" : pill.color,
-                      }}
-                    >
-                      {f}
-                    </button>
-                  );
-                })}
+        {/* stat cards */}
+        <Reveal delay={150}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 1, marginTop: 56, borderRadius: 16, overflow: "hidden", border: `1px solid ${C.border}` }}>
+            {STATS.map((s, i) => (
+              <div key={s.label} style={{ background: C.surface, padding: "20px 24px", borderRight: i < STATS.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                <div style={{ fontSize: 28, fontWeight: 700, color: C.accent, letterSpacing: "-0.02em" }}>{s.value}</div>
+                <div style={{ fontSize: 12, color: C.muted, marginTop: 4, fontWeight: 500 }}>{s.label}</div>
               </div>
-
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search projects (e.g., RAG, finance, FastAPI)..."
-                style={{
-                  width: 320,
-                  maxWidth: "100%",
-                  padding: "10px 12px",
-                  borderRadius: 14,
-                  border: "1px solid rgba(148,163,184,0.22)",
-                  background: "rgba(2,6,23,0.35)",
-                  color: "#e5e7eb",
-                  outline: "none",
-                }}
-              />
-            </div>
-          </Reveal>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(330px, 1fr))",
-              gap: 18,
-              marginTop: 20,
-            }}
-          >
-            {filteredProjects.map((p) => (
-              <Reveal key={p.title}>
-                <div
-                  style={{
-                    ...glass,
-                    borderRadius: 20,
-                    padding: 18,
-                    transition:
-                      "transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease",
-                    boxShadow: "0 8px 30px rgba(0,0,0,0.18)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-6px) scale(1.01)";
-                    e.currentTarget.style.boxShadow =
-                      "0 18px 40px rgba(14,165,233,0.12)";
-                    e.currentTarget.style.borderColor = "rgba(59,130,246,0.40)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0px) scale(1)";
-                    e.currentTarget.style.boxShadow = "0 8px 30px rgba(0,0,0,0.18)";
-                    e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.20)";
-                  }}
-                >
-                  <div style={{ color: "#93c5fd", fontSize: 12, fontWeight: 800 }}>
-                    {p.oneLiner}
-                  </div>
-                  <div style={{ marginTop: 8, fontWeight: 900, fontSize: 18 }}>
-                    {p.title}
-                  </div>
-                  <p style={{ marginTop: 8, ...subtleText, lineHeight: 1.6 }}>{p.desc}</p>
-
-                  <div
-                    style={{
-                      marginTop: 10,
-                      padding: "10px 12px",
-                      borderRadius: 14,
-                      background: "rgba(2,6,23,0.32)",
-                      border: "1px solid rgba(148,163,184,0.16)",
-                      color: "#bfdbfe",
-                      fontSize: 13,
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    <strong>Architecture:</strong> {p.architecture}
-                  </div>
-
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-                    {p.tags?.map((t) => (
-                      <span key={t} style={tagPill}>
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-
-                  <ul
-                    style={{
-                      marginTop: 12,
-                      paddingLeft: 18,
-                      ...subtleText,
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {p.metrics?.map((m, i) => (
-                      <li key={i} style={{ marginBottom: 6 }}>
-                        {m}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-                    {p.tech.map((t) => (
-                      <span key={t} style={pill}>
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
-                    <a
-                      href={p.live}
-                      target={p.live !== "#" ? "_blank" : undefined}
-                      rel={p.live !== "#" ? "noreferrer" : undefined}
-                      style={{
-                        ...primaryBtn,
-                        padding: "8px 12px",
-                        opacity: p.live === "#" ? 0.55 : 1,
-                        pointerEvents: p.live === "#" ? "none" : "auto",
-                      }}
-                    >
-                      Live Demo
-                    </a>
-
-                    <a
-                      href={p.github}
-                      target={p.github !== "#" ? "_blank" : undefined}
-                      rel={p.github !== "#" ? "noreferrer" : undefined}
-                      style={{
-                        ...linkBtn,
-                        padding: "8px 12px",
-                        opacity: p.github === "#" ? 0.55 : 1,
-                        pointerEvents: p.github === "#" ? "none" : "auto",
-                      }}
-                    >
-                      GitHub
-                    </a>
-
-                    <a
-                      href={p.github}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{
-                        ...linkBtn,
-                        padding: "8px 12px",
-                      }}
-                    >
-                      Architecture
-                    </a>
-                  </div>
-                </div>
-              </Reveal>
             ))}
           </div>
-        </div>
-      </section>
+        </Reveal>
+      </div>
 
-      <section style={sectionBorder}>
-        <div style={{ ...container, padding: "56px 0" }}>
-          <Reveal>
-            <h2 style={{ fontSize: 26, margin: 0 }}>What I Build</h2>
-            <div
-              style={{
-                marginTop: 18,
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                gap: 14,
-              }}
-            >
-              {whatIBuild.map((item, idx) => (
-                <div key={idx} style={{ ...glass, borderRadius: 18, padding: 18 }}>
-                  <div style={{ color: "#93c5fd", fontWeight: 900, fontSize: 18 }}>
-                    0{idx + 1}
+      {/* ─── FEATURED SPOTLIGHT ─── */}
+      <Section id="projects">
+        <SectionHead label="Work" title="Projects" subtitle="8 AI systems shipped to production — click any live demo to see it running." />
+
+        {/* HRMS featured spotlight */}
+        <Reveal>
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.accent, marginBottom: 12 }}>⭐ Spotlight</div>
+            <Card hover={false} style={{ border: `1px solid rgba(99,179,237,0.3)`, background: "rgba(99,179,237,0.04)" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "start", flexWrap: "wrap" }}>
+                <div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                    <Tag accent>Agentic AI</Tag><Tag accent>AWS</Tag><Tag accent>Full-Stack</Tag><Tag accent>IaC</Tag>
                   </div>
-                  <div style={{ marginTop: 8, ...subtleText, lineHeight: 1.7 }}>
-                    {item}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      <section id="architecture" style={sectionBorder}>
-        <div style={{ ...container, padding: "56px 0" }}>
-          <Reveal>
-            <h2 style={{ fontSize: 26, margin: 0 }}>AI System Architecture</h2>
-            <p style={{ marginTop: 8, ...subtleText }}>
-              Systems view of how I structure production-style AI pipelines.
-            </p>
-
-            <div
-              style={{
-                marginTop: 18,
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-                gap: 18,
-              }}
-            >
-              {architectureFlows.map((item) => (
-                <div key={item.title} style={{ ...glass, borderRadius: 18, padding: 18 }}>
-                  <div style={{ fontWeight: 900, fontSize: 16 }}>{item.title}</div>
-                  <div
-                    style={{
-                      marginTop: 14,
-                      display: "flex",
-                      gap: 8,
-                      flexWrap: "wrap",
-                      alignItems: "center",
-                    }}
-                  >
-                    {item.flow.map((node, idx) => (
-                      <div
-                        key={`${item.title}-${node}-${idx}`}
-                        style={{
-                          display: "flex",
-                          gap: 8,
-                          alignItems: "center",
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <span
-                          style={{
-                            padding: "8px 12px",
-                            borderRadius: 14,
-                            background: "rgba(2,6,23,0.34)",
-                            border: "1px solid rgba(148,163,184,0.18)",
-                            color: "#cbd5f5",
-                            fontSize: 13,
-                            fontWeight: 700,
-                          }}
-                        >
-                          {node}
-                        </span>
-                        {idx < item.flow.length - 1 && (
-                          <span style={{ color: "#93c5fd" }}>→</span>
-                        )}
+                  <div style={{ fontSize: 22, fontWeight: 700, color: C.text, marginBottom: 8 }}>HRMS Agent</div>
+                  <p style={{ fontSize: 14, color: C.subtle, lineHeight: 1.7, margin: "0 0 16px", maxWidth: 600 }}>
+                    AI-powered HR Management System with a Claude agentic loop — multi-step planning, persistent memory, 12 live tools, role-based approvals, and full audit trails. Deployed on AWS ECS Fargate with Terraform (38 resources) and GitHub Actions CI/CD.
+                  </p>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 8, marginBottom: 16 }}>
+                    {[
+                      "Claude orchestrates 12 HR tools across employee, ticket & leave workflows",
+                      "56% infra cost reduction — $62 → $27/month via architecture optimization",
+                      "Full CI/CD: git push → ECR → ECS Fargate, zero manual steps",
+                      "38 AWS resources provisioned via Terraform IaC",
+                    ].map((m, i) => (
+                      <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", padding: "8px 12px", borderRadius: 8, background: C.surface, border: `1px solid ${C.border}` }}>
+                        <span style={{ color: C.green, fontSize: 14, flexShrink: 0 }}>✓</span>
+                        <span style={{ fontSize: 12, color: C.subtle, lineHeight: 1.5 }}>{m}</span>
                       </div>
                     ))}
                   </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {["Claude Sonnet", "FastAPI", "Streamlit", "Docker", "AWS ECS", "Terraform", "GitHub Actions", "SQLite", "MCP"].map(t => <Tag key={t}>{t}</Tag>)}
+                  </div>
                 </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 130 }}>
+                  <a href="https://hrms.basilatiyire.com" target="_blank" rel="noreferrer" style={{ ...primaryBtn, padding: "10px 16px", fontSize: 13, justifyContent: "center" }}>
+                    Live Demo <Icon name="external" size={13} />
+                  </a>
+                  <a href="https://github.com/BaselAtiyire/hrms-agent" target="_blank" rel="noreferrer" style={{ ...ghostBtn, padding: "10px 16px", fontSize: 13, justifyContent: "center" }}>
+                    <Icon name="github" size={13} /> Code
+                  </a>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </Reveal>
+
+        {/* filter + search */}
+        <Reveal>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16, alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {filters.map(f => (
+                <button key={f} onClick={() => setActiveFilter(f)} style={{
+                  padding: "6px 14px", borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+                  border: `1px solid ${f === activeFilter ? "rgba(99,179,237,0.4)" : C.border}`,
+                  background: f === activeFilter ? C.accentDim : "transparent",
+                  color: f === activeFilter ? C.accent : C.muted,
+                  transition: "all 0.18s",
+                }}>{f}</button>
               ))}
             </div>
-          </Reveal>
-        </div>
-      </section>
+            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search projects…"
+              style={{ padding: "8px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, width: 240, fontFamily: "inherit" }} />
+          </div>
+        </Reveal>
 
-      <section style={sectionBorder}>
-        <div style={{ ...container, padding: "56px 0" }}>
-          <Reveal>
-            <h2 style={{ fontSize: 26, margin: 0 }}>Skills Grid</h2>
-            <div
-              style={{
-                marginTop: 18,
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-                gap: 16,
-              }}
-            >
-              {skillsGrid.map((group) => (
-                <div key={group.title} style={{ ...glass, borderRadius: 18, padding: 18 }}>
-                  <div style={{ fontSize: 22 }}>{group.icon}</div>
-                  <div style={{ marginTop: 8, fontWeight: 900, fontSize: 16 }}>
-                    {group.title}
-                  </div>
-                  <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    {group.items.map((item) => (
-                      <span key={item} style={pill}>
-                        {item}
-                      </span>
-                    ))}
-                  </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
+          {filtered.map((p, i) => (
+            <Reveal key={p.title} delay={i * 50}>
+              <Card style={{ height: "100%", display: "flex", flexDirection: "column", gap: 14 }}>
+                <div>
+                  {p.featured && <div style={{ marginBottom: 10 }}><Tag accent>Featured</Tag></div>}
+                  <div style={{ fontSize: 12, color: C.muted, marginBottom: 6, lineHeight: 1.5 }}>{p.oneLiner}</div>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: C.text, lineHeight: 1.3 }}>{p.title}</div>
                 </div>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      <section id="metrics" style={sectionBorder}>
-        <div style={{ ...container, padding: "56px 0" }}>
-          <Reveal>
-            <h2 style={{ fontSize: 26, margin: 0 }}>Project Metrics</h2>
-            <p style={{ marginTop: 8, ...subtleText }}>
-              Performance metrics derived from system evaluations across latency,
-              retrieval accuracy, and cost efficiency.
-            </p>
-            <div style={{ marginTop: 8, color: "#94a3b8", fontSize: 12 }}>
-              {computedMetrics.note}
-            </div>
-
-            <div
-              style={{
-                marginTop: 16,
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-                gap: 14,
-              }}
-            >
-              <div style={{ ...glass, borderRadius: 18, padding: 16 }}>
-                <div style={{ color: "#93c5fd", fontWeight: 800, fontSize: 13 }}>
-                  Latency
-                </div>
-                <div style={{ marginTop: 10, display: "grid", gap: 12 }}>
-                  <MiniBar
-                    value={computedMetrics.global.p50LatencyMs}
-                    max={3000}
-                    label="p50 (ms)"
-                    suffix="ms"
-                  />
-                  <MiniBar
-                    value={computedMetrics.global.p95LatencyMs}
-                    max={3000}
-                    label="p95 (ms)"
-                    suffix="ms"
-                  />
-                </div>
-              </div>
-
-              <div style={{ ...glass, borderRadius: 18, padding: 16 }}>
-                <div style={{ color: "#93c5fd", fontWeight: 800, fontSize: 13 }}>
-                  Quality
-                </div>
-                <div style={{ marginTop: 10, display: "grid", gap: 12 }}>
-                  <PercentBar
-                    value={toPct(computedMetrics.global.recallAt5)}
-                    label="Recall@5"
-                  />
-                  <PercentBar
-                    value={toPct(computedMetrics.global.successRate)}
-                    label="Success rate"
-                  />
-                </div>
-              </div>
-
-              <div style={{ ...glass, borderRadius: 18, padding: 16 }}>
-                <div style={{ color: "#93c5fd", fontWeight: 800, fontSize: 13 }}>
-                  Cost
-                </div>
-                <div style={{ marginTop: 10, display: "grid", gap: 12 }}>
-                  <MiniBar
-                    value={computedMetrics.global.tokensPerQuery}
-                    max={2000}
-                    label="Tokens/query"
-                  />
-                  <MiniBar
-                    value={
-                      computedMetrics.global.costPerQueryUsd == null
-                        ? null
-                        : computedMetrics.global.costPerQueryUsd * 1000
-                    }
-                    max={20}
-                    label="Cost/query (x $0.001)"
-                  />
-                </div>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      <section id="trends" style={sectionBorder}>
-        <div style={{ ...container, padding: "56px 0" }}>
-          <Reveal>
-            <h2 style={{ fontSize: 26, margin: 0 }}>Trends (Δ + %)</h2>
-            <p style={{ marginTop: 8, ...subtleText }}>
-              Week-over-week changes in performance metrics across evaluated systems.
-            </p>
-            <div style={{ marginTop: 8, color: "#94a3b8", fontSize: 12 }}>
-              {historyLoadNote || computedTrends.note}
-            </div>
-
-            {!computedTrends.hasTrend ? (
-              <div
-                style={{
-                  marginTop: 14,
-                  ...glass,
-                  borderRadius: 18,
-                  padding: 18,
-                  ...subtleText,
-                }}
-              >
-                Add 2+ snapshots in metrics_history.json to view trend deltas and
-                percentage changes.
-              </div>
-            ) : (
-              <>
-                <div style={{ marginTop: 14, ...glass, borderRadius: 18, padding: 18 }}>
-                  <div style={{ fontWeight: 900, fontSize: 16 }}>Global change</div>
-
-                  <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                    <span style={pill}>p50</span>
-                    <TrendPill
-                      delta={computedTrends.deltaGlobal.p50LatencyMs}
-                      pctChange={computedTrends.pctGlobal.p50LatencyMs}
-                      goodWhenHigher={false}
-                      suffix=" ms"
-                    />
-
-                    <span style={pill}>p95</span>
-                    <TrendPill
-                      delta={computedTrends.deltaGlobal.p95LatencyMs}
-                      pctChange={computedTrends.pctGlobal.p95LatencyMs}
-                      goodWhenHigher={false}
-                      suffix=" ms"
-                    />
-
-                    <span style={pill}>Recall@5</span>
-                    <TrendPill
-                      delta={computedTrends.deltaGlobal.recallAt5}
-                      pctChange={computedTrends.pctGlobal.recallAt5}
-                      goodWhenHigher={true}
-                      decimals={2}
-                    />
-
-                    <span style={pill}>Cost/q</span>
-                    <TrendPill
-                      delta={computedTrends.deltaGlobal.costPerQueryUsd}
-                      pctChange={computedTrends.pctGlobal.costPerQueryUsd}
-                      goodWhenHigher={false}
-                      decimals={3}
-                      suffix=" $"
-                    />
-
-                    <span style={pill}>Success</span>
-                    <TrendPill
-                      delta={computedTrends.deltaGlobal.successRate}
-                      pctChange={computedTrends.pctGlobal.successRate}
-                      goodWhenHigher={true}
-                      decimals={2}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ marginTop: 14, ...glass, borderRadius: 18, padding: 18 }}>
-                  <div style={{ fontWeight: 900, fontSize: 16 }}>Per-project change</div>
-                  <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-                    {computedTrends.deltaProjects.map((p) => (
-                      <div
-                        key={p.name}
-                        style={{
-                          padding: 14,
-                          borderRadius: 16,
-                          background: "rgba(2,6,23,0.35)",
-                          border: "1px solid rgba(148,163,184,0.18)",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            gap: 10,
-                            flexWrap: "wrap",
-                          }}
-                        >
-                          <div style={{ fontWeight: 900 }}>{p.name}</div>
-                          <span style={tagPill}>{p.type}</span>
-                        </div>
-
-                        <div
-                          style={{
-                            marginTop: 10,
-                            display: "flex",
-                            gap: 10,
-                            flexWrap: "wrap",
-                            alignItems: "center",
-                          }}
-                        >
-                          <span style={pill}>p95</span>
-                          <TrendPill
-                            delta={p.delta.p95LatencyMs}
-                            pctChange={p.pct.p95LatencyMs}
-                            goodWhenHigher={false}
-                            suffix=" ms"
-                          />
-
-                          <span style={pill}>Recall@5</span>
-                          <TrendPill
-                            delta={p.delta.recallAt5}
-                            pctChange={p.pct.recallAt5}
-                            goodWhenHigher={true}
-                            decimals={2}
-                          />
-
-                          <span style={pill}>Cost/q</span>
-                          <TrendPill
-                            delta={p.delta.costPerQueryUsd}
-                            pctChange={p.pct.costPerQueryUsd}
-                            goodWhenHigher={false}
-                            decimals={3}
-                            suffix=" $"
-                          />
-
-                          <span style={pill}>Success</span>
-                          <TrendPill
-                            delta={p.delta.successRate}
-                            pctChange={p.pct.successRate}
-                            goodWhenHigher={true}
-                            decimals={2}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-          </Reveal>
-        </div>
-      </section>
-
-      <section id="education" style={sectionBorder}>
-        <div style={{ ...container, padding: "56px 0" }}>
-          <Reveal>
-            <h2 style={{ fontSize: 26, margin: 0 }}>Education & Credentials</h2>
-
-            <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
-              {education.map((e, i) => (
-                <div key={i} style={{ ...glass, borderRadius: 18, padding: 18 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      flexWrap: "wrap",
-                      gap: 10,
-                    }}
-                  >
-                    <div style={{ fontWeight: 900 }}>{e.degree}</div>
-                    <div style={{ color: "#93c5fd", fontSize: 13, fontWeight: 800 }}>
-                      {e.period}
-                    </div>
-                  </div>
-                  <div style={{ marginTop: 6, ...subtleText, fontWeight: 800 }}>
-                    {e.school}
-                  </div>
-                  <ul
-                    style={{
-                      marginTop: 10,
-                      paddingLeft: 18,
-                      ...subtleText,
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {e.details.map((d, idx) => (
-                      <li key={idx}>{d}</li>
-                    ))}
+                <p style={{ fontSize: 13, color: C.subtle, lineHeight: 1.65, margin: 0, flex: 1 }}>{p.desc}</p>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 8 }}>Key Results</div>
+                  <ul style={{ margin: 0, paddingLeft: 16, display: "flex", flexDirection: "column", gap: 4 }}>
+                    {p.metrics.map((m, mi) => <li key={mi} style={{ fontSize: 12, color: C.subtle, lineHeight: 1.55 }}>{m}</li>)}
                   </ul>
                 </div>
-              ))}
-            </div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {p.tags.map(t => <Tag key={t} accent>{t}</Tag>)}
+                </div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {p.tech.map(t => <Tag key={t}>{t}</Tag>)}
+                </div>
+                <div style={{ display: "flex", gap: 8, marginTop: "auto" }}>
+                  {p.live !== "#" && (
+                    <a href={p.live} target="_blank" rel="noreferrer" style={{ ...primaryBtn, padding: "8px 14px", fontSize: 12, flex: 1, justifyContent: "center" }}>
+                      Live Demo <Icon name="external" size={13} />
+                    </a>
+                  )}
+                  <a href={p.github} target="_blank" rel="noreferrer" style={{ ...ghostBtn, padding: "8px 14px", fontSize: 12, flex: 1, justifyContent: "center" }}>
+                    <Icon name="github" size={13} /> Code
+                  </a>
+                </div>
+              </Card>
+            </Reveal>
+          ))}
+        </div>
+      </Section>
 
-            <div style={{ marginTop: 16, ...glass, borderRadius: 18, padding: 18 }}>
-              <div style={{ fontWeight: 900, fontSize: 16 }}>Certifications</div>
-              <div style={{ display: "grid", gap: 14, marginTop: 14 }}>
-                {certifications.map((c) => (
-                  <div
-                    key={c.title}
-                    style={{
-                      padding: 14,
-                      borderRadius: 16,
-                      background: "rgba(2, 6, 23, 0.45)",
-                      border: "1px solid rgba(148,163,184,0.18)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        flexWrap: "wrap",
-                        gap: 10,
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 10,
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <LogoChip code={c.logo} />
-                        <div style={{ fontWeight: 900 }}>
-                          {c.title}{" "}
-                          <span style={{ color: "#93c5fd", fontWeight: 700 }}>
-                            — {c.issuer} ({c.year})
-                          </span>
-                        </div>
-                      </div>
-                      <a
-                        href={c.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{
-                          ...primaryBtn,
-                          padding: "8px 14px",
-                          borderRadius: 12,
-                        }}
-                      >
-                        {c.type === "badge" ? "View Badge" : "View Certificate"}
-                      </a>
+      {/* ─── ARCHITECTURE ─── */}
+      <Section id="architecture">
+        <SectionHead label="Systems Design" title="AI Pipeline Architecture" subtitle="How I structure production-style AI systems — from ingestion to response." />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
+          {ARCH_FLOWS.map((a, ai) => (
+            <Reveal key={a.title} delay={ai * 80}>
+              <Card hover={false} style={{ gap: 16, display: "flex", flexDirection: "column" }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.accent }}>{a.title}</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+                  {a.flow.map((node, ni) => (
+                    <div key={`${a.title}-${ni}`} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{
+                        padding: "5px 11px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                        background: ni === 0 ? C.accentDim : ni === a.flow.length - 1 ? "rgba(104,211,145,0.12)" : C.surface,
+                        border: `1px solid ${ni === 0 ? "rgba(99,179,237,0.3)" : ni === a.flow.length - 1 ? "rgba(104,211,145,0.3)" : C.border}`,
+                        color: ni === 0 ? C.accent : ni === a.flow.length - 1 ? C.green : C.subtle,
+                      }}>{node}</span>
+                      {ni < a.flow.length - 1 && <span style={{ color: C.muted, fontSize: 14 }}>→</span>}
                     </div>
+                  ))}
+                </div>
+              </Card>
+            </Reveal>
+          ))}
+        </div>
+      </Section>
 
-                    <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
-                      {c.skills.map((s) => (
-                        <span key={s} style={pill}>
-                          {s}
-                        </span>
-                      ))}
+      {/* ─── SKILLS ─── */}
+      <Section id="skills">
+        <SectionHead label="Capabilities" title="Technical Skills" />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
+          {SKILLS.map((g, gi) => (
+            <Reveal key={g.title} delay={gi * 80}>
+              <Card style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: C.accentDim, border: `1px solid rgba(99,179,237,0.2)`, display: "flex", alignItems: "center", justifyContent: "center", color: C.accent }}>
+                    <Icon name={g.icon} size={18} />
+                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 700 }}>{g.title}</div>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {g.items.map(item => <Tag key={item}>{item}</Tag>)}
+                </div>
+              </Card>
+            </Reveal>
+          ))}
+        </div>
+      </Section>
+
+      {/* ─── METRICS ─── */}
+      <Section id="metrics">
+        <SectionHead label="Performance" title="System Metrics" subtitle="Evaluation results across latency, retrieval quality, and cost efficiency." />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+          {[
+            { title: "Latency", bars: [{ label: "p50 (ms)", val: 1200, max: 3000 }, { label: "p95 (ms)", val: 2100, max: 3000 }] },
+            { title: "Quality", bars: [{ label: "Recall@5", val: 85, max: 100, pct: true }, { label: "Success Rate", val: 100, max: 100, pct: true }] },
+            { title: "Cost Efficiency", bars: [{ label: "Tokens / query", val: 760, max: 2000 }, { label: "Cost / query (m¢)", val: 5.5, max: 20 }] },
+          ].map((group, gi) => (
+            <Reveal key={group.title} delay={gi * 80}>
+              <Card hover={false} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, letterSpacing: "0.1em", textTransform: "uppercase" }}>{group.title}</div>
+                {group.bars.map(b => (
+                  <div key={b.label} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                      <span style={{ color: C.subtle }}>{b.label}</span>
+                      <span style={{ fontWeight: 700, color: C.accent }}>{b.pct ? `${b.val}%` : Math.round(b.val)}</span>
                     </div>
-
-                    <details style={{ marginTop: 12 }}>
-                      <summary
-                        style={{
-                          cursor: "pointer",
-                          color: "#cbd5f5",
-                          fontWeight: 800,
-                          listStyle: "none",
-                          outline: "none",
-                        }}
-                      >
-                        View details
-                      </summary>
-                      <div style={{ marginTop: 10, ...subtleText, lineHeight: 1.65 }}>
-                        {c.description}
-                      </div>
-                    </details>
+                    <div style={{ height: 6, borderRadius: 999, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${(b.val / b.max) * 100}%`, borderRadius: 999, background: C.accentGrad, transition: "width 1s ease" }} />
+                    </div>
                   </div>
                 ))}
-              </div>
-            </div>
-          </Reveal>
+              </Card>
+            </Reveal>
+          ))}
         </div>
-      </section>
+      </Section>
 
-      <section style={sectionBorder}>
-        <div style={{ ...container, padding: "56px 0" }}>
-          <Reveal>
-            <h2 style={{ fontSize: 26, margin: 0 }}>Research & Publications</h2>
-
-            <div style={{ display: "grid", gap: 14, marginTop: 14 }}>
-              {publications.map((pub) => (
-                <div key={pub.key} style={{ ...glass, borderRadius: 18, padding: 18 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: 12,
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <div style={{ fontWeight: 900 }}>{pub.title}</div>
-                    <div style={{ color: "#93c5fd", fontSize: 13 }}>{pub.year}</div>
+      {/* ─── EDUCATION ─── */}
+      <Section id="education">
+        <SectionHead label="Background" title="Education & Credentials" />
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 }}>
+          {EDUCATION.map((e, i) => (
+            <Reveal key={i} delay={i * 80}>
+              <Card hover={false} style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 20, alignItems: "start" }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: C.accentDim, border: `1px solid rgba(99,179,237,0.2)`, display: "flex", alignItems: "center", justifyContent: "center", color: C.accent, flexShrink: 0 }}>
+                  <Icon name="book" size={20} />
+                </div>
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 4 }}>
+                    <div style={{ fontWeight: 700, fontSize: 16 }}>{e.degree}</div>
+                    <Tag>{e.period}</Tag>
                   </div>
+                  <div style={{ fontSize: 13, color: C.accent, fontWeight: 600, marginBottom: 6 }}>{e.school}</div>
+                  <div style={{ fontSize: 12, color: C.muted }}>{e.focus}</div>
+                </div>
+              </Card>
+            </Reveal>
+          ))}
+        </div>
 
-                  <div style={{ marginTop: 6, ...subtleText }}>{pub.venue}</div>
-
-                  <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                    <a
-                      href={pub.link}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{
-                        ...primaryBtn,
-                        padding: "8px 12px",
-                        borderRadius: 12,
-                      }}
-                    >
-                      View Publication
-                    </a>
-
-                    {pub.pdfUrl ? (
-                      <a
-                        href={pub.pdfUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{
-                          ...linkBtn,
-                          padding: "8px 12px",
-                          borderRadius: 12,
-                        }}
-                      >
-                        Download PDF
-                      </a>
-                    ) : (
-                      <span
-                        style={{
-                          ...linkBtn,
-                          padding: "8px 12px",
-                          borderRadius: 12,
-                          opacity: 0.55,
-                        }}
-                      >
-                        PDF Not Available
-                      </span>
-                    )}
-
-                    <a
-                      href={pub.doiUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{
-                        ...linkBtn,
-                        padding: "8px 12px",
-                        borderRadius: 12,
-                      }}
-                    >
-                      DOI
-                    </a>
-
-                    <button
-                      onClick={() => copyText(pub.apa, `apa_${pub.key}`)}
-                      style={{
-                        ...linkBtn,
-                        padding: "8px 12px",
-                        borderRadius: 12,
-                        background: "rgba(2,6,23,0.35)",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {copiedKey === `apa_${pub.key}` ? "Copied!" : "Copy APA"}
-                    </button>
+        <SectionHead label="" title="Certifications" />
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {CERTS.map((c, i) => (
+            <Reveal key={c.title} delay={i * 80}>
+              <Card hover={false} style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 20, alignItems: "start" }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: C.accentDim, border: `1px solid rgba(99,179,237,0.2)`, display: "flex", alignItems: "center", justifyContent: "center", color: C.accent }}>
+                  <Icon name="award" size={20} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, marginBottom: 4 }}>{c.title}</div>
+                  <div style={{ fontSize: 12, color: C.muted, marginBottom: 10 }}>{c.issuer} · {c.year}</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {c.skills.map(s => <Tag key={s}>{s}</Tag>)}
                   </div>
                 </div>
-              ))}
-            </div>
-          </Reveal>
+                <a href={c.url} target="_blank" rel="noreferrer" style={{ ...primaryBtn, padding: "8px 14px", fontSize: 12, whiteSpace: "nowrap" }}>
+                  View <Icon name="external" size={13} />
+                </a>
+              </Card>
+            </Reveal>
+          ))}
         </div>
-      </section>
+      </Section>
 
-      <section id="resume" style={sectionBorder}>
-        <div style={{ ...container, padding: "56px 0" }}>
-          <Reveal>
-            <h2 style={{ fontSize: 26, margin: 0 }}>Resume</h2>
-            <p style={{ marginTop: 8, ...subtleText }}>
-              Put your resume file at:{" "}
-              <code style={{ color: "#93c5fd" }}>public/resume.pdf</code>
+      {/* ─── PUBLICATIONS ─── */}
+      <Section id="publications">
+        <SectionHead label="Research" title="Publications" />
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {PUBS.map((pub, i) => (
+            <Reveal key={pub.key} delay={i * 80}>
+              <Card hover={false}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 8 }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, lineHeight: 1.4, flex: 1 }}>{pub.title}</div>
+                  <Tag>{pub.year}</Tag>
+                </div>
+                <div style={{ fontSize: 12, color: C.muted, marginBottom: 16 }}>{pub.venue}</div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <a href={pub.link} target="_blank" rel="noreferrer" style={{ ...primaryBtn, padding: "7px 13px", fontSize: 12 }}>
+                    View <Icon name="external" size={12} />
+                  </a>
+                  {pub.pdfUrl && (
+                    <a href={pub.pdfUrl} target="_blank" rel="noreferrer" style={{ ...ghostBtn, padding: "7px 13px", fontSize: 12 }}>PDF</a>
+                  )}
+                  <a href={pub.doiUrl} target="_blank" rel="noreferrer" style={{ ...ghostBtn, padding: "7px 13px", fontSize: 12 }}>DOI</a>
+                  <button onClick={() => copyText(pub.apa, pub.key)} style={{ ...ghostBtn, padding: "7px 13px", fontSize: 12 }}>
+                    {copiedKey === pub.key ? <><Icon name="check" size={13} /> Copied</> : <><Icon name="copy" size={13} /> Copy APA</>}
+                  </button>
+                </div>
+              </Card>
+            </Reveal>
+          ))}
+        </div>
+      </Section>
+
+      {/* ─── CONTACT ─── */}
+      <Section id="contact">
+        <Reveal>
+          <div style={{ textAlign: "center", maxWidth: 560, margin: "0 auto" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: C.accent, marginBottom: 16 }}>Get in Touch</div>
+            <h2 style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-0.02em", margin: "0 0 16px", lineHeight: 1.2 }}>
+              Let's build intelligent systems together.
+            </h2>
+            <p style={{ color: C.muted, lineHeight: 1.75, marginBottom: 32 }}>
+              Open to AI Engineer, ML Engineer, and Data Engineer roles in 2026. Always happy to connect on interesting AI projects.
             </p>
-            <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <a href="/resume.pdf" style={primaryBtn}>
-                Download Resume
-              </a>
-              <a href="/resume.pdf" target="_blank" rel="noreferrer" style={linkBtn}>
-                Open PDF
-              </a>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
+              <a href="mailto:basilatiyire@gmail.com" style={primaryBtn}><Icon name="mail" /> Contact Me</a>
+              <a href="http://www.linkedin.com/in/basel-atiyire-7666ba232/" target="_blank" rel="noreferrer" style={ghostBtn}><Icon name="linkedin" /> LinkedIn</a>
+              <a href="https://github.com/BaselAtiyire/" target="_blank" rel="noreferrer" style={ghostBtn}><Icon name="github" /> GitHub</a>
             </div>
-          </Reveal>
-        </div>
-      </section>
+          </div>
+        </Reveal>
+      </Section>
 
-      <section id="contact" style={sectionBorder}>
-        <div style={{ ...container, padding: "56px 0" }}>
-          <Reveal>
-            <div style={{ ...glass, borderRadius: 22, padding: 22 }}>
-              <h2 style={{ fontSize: 26, margin: 0 }}>
-                Let’s build intelligent systems together.
-              </h2>
-              <p style={{ marginTop: 10, ...subtleText, lineHeight: 1.7 }}>
-                Open to AI Engineer, Machine Learning Engineer, and Data Engineer
-                opportunities (2026).
-              </p>
-
-              <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <a href="mailto:basilatiyire@gmail.com" style={primaryBtn}>
-                  <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
-                    <Icon name="mail" /> Contact Me
-                  </span>
-                </a>
-                <a
-                  href="http://www.linkedin.com/in/basel-atiyire-7666ba232/"
-                  target="_blank"
-                  rel="noreferrer"
-                  style={linkBtn}
-                >
-                  <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
-                    <Icon name="linkedin" /> LinkedIn
-                  </span>
-                </a>
-                <a
-                  href="https://github.com/BaselAtiyire/"
-                  target="_blank"
-                  rel="noreferrer"
-                  style={linkBtn}
-                >
-                  <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
-                    <Icon name="github" /> GitHub
-                  </span>
-                </a>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      <footer
-        style={{
-          borderTop: "1px solid rgba(148, 163, 184, 0.15)",
-          padding: "22px 0",
-          color: "#94a3b8",
-          fontSize: 13,
-        }}
-      >
-        <div style={container}>© {new Date().getFullYear()} • Built with React</div>
+      {/* ─── FOOTER ─── */}
+      <footer style={{ borderTop: `1px solid ${C.border}`, padding: "24px", textAlign: "center", fontSize: 12, color: C.muted }}>
+        © {new Date().getFullYear()} Basel Atiyire · Built with React & Vite
       </footer>
     </div>
   );
